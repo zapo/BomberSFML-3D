@@ -32,9 +32,13 @@ public:
 
 	sf::Uint32 GetHeightAt(unsigned int x, unsigned y) const;
 
-	void Render();
+	void Render(float framerate);
 	void Update();
 	sf::Uint32 GetNbNodes() const;
+
+	sf::Uint32 GetNbTriangles() const {
+		return numbTriangles;
+	}
 
 	void SetTextureRepeat(bool);
 
@@ -42,19 +46,39 @@ public:
 	Camera & GetCamera();
 
 	void SetScale(const sf::Vector3i &);
+	const sf::Vector3i & GetScale() {
+		return scale;
+	}
+
+	const sf::Image & GetMainTexture() const {
+		return mainTexture;
+	}
 
 	void RefineNode(TerrainNode & node);
-	void RenderNode(TerrainNode & node);
 
 	void Render(sf::RenderTarget &) const {
 
 	}
 
+	void SetMaxResolution(float res) {
+		maxResolution = res;
+	}
+
+	void SetMinResolution(float res) {
+		minResolution = res;
+	}
+
+	float GetMaxResolution() const {
+		return maxResolution;
+	}
+
+	float GetMinResolution() const {
+		return minResolution;
+	}
+
 private:
 
 	sf::Uint32 GetRelHeightAt(unsigned int x, unsigned y) const;
-
-	NodeState ** quadMatrix;
 
 	TerrainNode * root;
 
@@ -70,12 +94,19 @@ private:
 	GLuint ibo;
 	unsigned int size;
 
+	float framerate;
+
 	float maxResolution;
 	float minResolution;
 
 	unsigned int numbNodes;
+	unsigned int numbTriangles;
 
 	std::list<Vertex3D> vertices;
+	std::list<unsigned int> indexes;
+	GLuint VBO, IBO;
+
+	sf::Clock framerateAdapterTimer;
 
 };
 

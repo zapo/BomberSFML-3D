@@ -11,6 +11,8 @@
 #include <SFML/Graphics.hpp>
 #include "Vertex3D.h"
 
+class Terrain;
+
 class TerrainNode {
 public:
 
@@ -18,7 +20,8 @@ public:
 		NW, NE, SW, SE
 	};
 
-	TerrainNode(const sf::Vector2i & center, unsigned int size);
+
+	TerrainNode(const sf::Vector2i & center, unsigned int size, Terrain & t);
 	virtual ~TerrainNode();
 
 	unsigned int GetSize() const {
@@ -53,7 +56,21 @@ public:
 		return *(children[type]);
 	}
 
+	sf::IntRect & GetBoundBox() {
+		return boundBox;
+	}
+
+
+	void Render();
+
+	static unsigned int MIN_SIZE;
+
+	bool isLeaf;
+
 private :
+
+	Terrain * terrain;
+	sf::IntRect boundBox;
 
 	sf::Vector2i center;
 	unsigned int size;
@@ -61,6 +78,8 @@ private :
 	Vertex3D vertices[9];
 
 	TerrainNode * children[4];
+
+
 };
 
 #endif /* TERRAINNODE_H_ */

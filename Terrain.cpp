@@ -8,27 +8,34 @@
 
 #define BUFFER_OFFSET(i) ((char*) NULL + (i))
 
+
 #include "Terrain.h"
 #include "Camera.h"
 #include <iostream>
-#include "VectorUtils.h"
 #include <algorithm>
 #include "TerrainNode.h"
+#include "VectorUtils.h"
 
 Terrain::Terrain(const std::string & texturePath) {
-	maxResolution = 9.f;
-	minResolution = 3.f;
+	maxResolution = 3.f;
+	minResolution = 1.f;
 
-	mainTexture.LoadFromFile(texturePath);
+	if(mainTexture.LoadFromFile(texturePath)) {
+		std::cout << "texture loaded" << std::endl;
+
+
+	}
 	mainTexture.SetSmooth(true);
 	heights = NULL;
 
-	mainTexture.SetSmooth(true);
+
+
 }
 
 Terrain::~Terrain() {
 
 	UnloadHeightMap();
+	delete root;
 }
 
 void Terrain::UnloadHeightMap() {
@@ -108,160 +115,108 @@ bool Terrain::LoadHeightMap(const std::string & filename) {
 
 	SetCenter(sf::Vector2f((GetPosition().x + size) / 2, (GetPosition().y + size) / 2));
 
-	quadMatrix = new NodeState * [size];
-
-	for(unsigned int i = 0; i < size; i++) {
-
-		quadMatrix[i] = new NodeState [size];
-
-		for(unsigned int j = 0; j < size; j++) {
-
-			quadMatrix[i][j] = UNKNOWN;
-
-		}
-	}
-
-	root = new TerrainNode(sf::Vector2i(size / 2, size / 2), size - 1);
+	root = new TerrainNode(sf::Vector2i(size / 2, size / 2), size - 1, *this);
 
 	return true;
 }
 
-void Terrain::Render() {
 
-	RenderNode(*root);
+void Terrain::Render(float framerate) {
 
-}
+	this->framerate = framerate;
 
-void Terrain::Update() {
+	glDisable(GL_TEXTURE_2D);
+	glEnable(GL_TEXTURE_2D);
 
-	numbNodes = 1;
+	mainTexture.Bind();
 
-	RefineNode(*root);
+	if(textureRepeat) {
+
+		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
+		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
+
+	}
+
+	numbNodes = 0;
+	numbTriangles = 0;
+
+	if(camera->IsInFrustrum(*root)) {
+		RefineNode(*root);
+		numbNodes ++;
+	}
+
 }
 
 void Terrain::RefineNode(TerrainNode & node) {
 
-	sf::Vector2i center = node.GetCenter();
-	unsigned int size 	= node.GetSize();
 
-	float distance = ( float ) utils::VectorLength(sf::Vector3f(center.x, GetHeightAt(center.x, center.y), center.y), camera->GetPosition());
+	unsigned int size = node.GetSize();
 
-	unsigned int offset = (size / 2);
+	float distance = ( float ) utils::VectorLength(node.GetVertex(Vertex::CENTER).pos, camera->GetPosition());
 
 	float maxheight = 0;
-
 	float _heights[5];
 
-	_heights[0] = GetRelHeightAt(center.x - offset	, center.y + offset);
-	_heights[1] = GetRelHeightAt(center.x + offset	, center.y + offset);
-	_heights[2] = GetRelHeightAt(center.x - offset	, center.y - offset);
-	_heights[3] = GetRelHeightAt(center.x + offset	, center.y - offset);
-	_heights[3] = GetRelHeightAt(center.x			, center.y);
+	sf::IntRect boundBox = node.GetBoundBox();
 
-	for(int i = 0; i < 5; i++) {
+	_heights[0] = GetRelHeightAt(node.GetCenter().x	, boundBox.Top);
+	_heights[1] = GetRelHeightAt(node.GetCenter().x	, boundBox.Bottom);
+	_heights[2] = GetRelHeightAt(boundBox.Right	, node.GetCenter().y);
+	_heights[3] = GetRelHeightAt(boundBox.Left	, node.GetCenter().y);
 
-		maxheight = std::max(maxheight, _heights[i]);
+	float _center_height = GetRelHeightAt(node.GetCenter().x , node.GetCenter().y);
+
+	for(int i = 0; i < 4; i++) {
+		maxheight = std::max(maxheight, (float) fabs(_center_height - _heights[i]));
 	}
 
-	float f = distance /( (float) size * 8 * std::max(maxheight / 10, 1.0f ));
 
-	if(f < 1.0f && size >= 2) {
+	float f = distance / ((float) size * std::max(maxResolution, 0.1f) * std::max(maxheight ,1.f));
+
+	if(f < 1.0f && size / 2 >= TerrainNode::MIN_SIZE) {
 
 		//subdivide
 
-		quadMatrix[center.x][center.y] = TRUE;
+		node.isLeaf = false;
 
-		unsigned int new_size = size / 2;
-		unsigned int new_offset = new_size / 2;
+		for(unsigned int i=0; i < 9; i++) {
+			node.GetVertex((Vertex::Location)i).enabled = false;
+		}
 
-		numbNodes += 4;
+		if(camera->IsInFrustrum(node.GetChild(TerrainNode::NW))) {
+			RefineNode(node.GetChild(TerrainNode::NW));
+			numbNodes ++;
+		}
 
-		TerrainNode * childNW = new TerrainNode(sf::Vector2i(center.x - new_offset, center.y + new_offset), new_size);
-		TerrainNode * childNE = new TerrainNode(sf::Vector2i(center.x + new_offset, center.y + new_offset), new_size);
-		TerrainNode * childSW = new TerrainNode(sf::Vector2i(center.x - new_offset, center.y - new_offset), new_size);
-		TerrainNode * childSE = new TerrainNode(sf::Vector2i(center.x + new_offset, center.y - new_offset), new_size);
+		if(camera->IsInFrustrum(node.GetChild(TerrainNode::NE))) {
+			RefineNode(node.GetChild(TerrainNode::NE));
+			numbNodes ++;
+		}
 
-		node.SetChild(TerrainNode::NW, *childNW);
-		node.SetChild(TerrainNode::NE, *childNE);
-		node.SetChild(TerrainNode::SW, *childSW);
-		node.SetChild(TerrainNode::SE, *childSE);
+		if(camera->IsInFrustrum(node.GetChild(TerrainNode::SW))) {
+			RefineNode(node.GetChild(TerrainNode::SW));
+			numbNodes ++;
+		}
 
-		RefineNode(*childNW);
-		RefineNode(*childNE);
-		RefineNode(*childSW);
-		RefineNode(*childSE);
+		if(camera->IsInFrustrum(node.GetChild(TerrainNode::SE))) {
+			RefineNode(node.GetChild(TerrainNode::SE));
+			numbNodes ++;
+		}
 
 	} else {
-		quadMatrix[center.x][center.y] = FALSE;
+		node.isLeaf = true;
+
+		for(unsigned int i=0; i < 9; i++) {
+			node.GetVertex((Vertex::Location)i).enabled = true;
+		}
+
+		numbTriangles += 8;
 	}
+
+	node.Render();
 
 }
 
-void Terrain::RenderNode(TerrainNode & node) {
-
-	sf::Vector2i center = node.GetCenter();
-	unsigned int size = node.GetSize();
-
-	unsigned int offset = size / 2;
-
-	glColor3ub(255, 0, 0);
-
-	glBegin(GL_TRIANGLE_FAN);
-
-	glVertex3f(center.x, GetHeightAt(center.x, center.y), center.y);
-
-
-	// left
-
-	glVertex3f(center.x - offset, GetHeightAt(center.x - offset	, center.y), center.y );
-
-	// top left
-
-	glVertex3f(center.x - offset, GetHeightAt(center.x - offset	, center.y + offset), center.y + offset);
-
-	// top
-
-	glVertex3f(center.x, GetHeightAt(center.x, center.y + offset), center.y + offset);
-
-	// top right
-
-	glVertex3f(center.x + offset, GetHeightAt(center.x + offset	, center.y + offset), center.y + offset);
-
-	// right
-
-	glVertex3f(center.x + offset, GetHeightAt(center.x + offset	, center.y), center.y);
-
-	// bottom right
-
-	glVertex3f(center.x + offset, GetHeightAt(center.x + offset	, center.y - offset), center.y - offset);
-
-	// bottom
-
-	glVertex3f(center.x, GetHeightAt(center.x, center.y - offset), center.y - offset);
-
-	// bottom left
-
-	glVertex3f(center.x - offset, GetHeightAt(center.x - offset	, center.y - offset), center.y - offset);
-
-	// left
-
-	glVertex3f(center.x - offset, GetHeightAt(center.x - offset	, center.y), center.y );
-
-
-	glEnd();
-
-
-	if(quadMatrix[center.x][center.y] == TRUE) {
-
-		RenderNode(node.GetChild(TerrainNode::NW));
-		RenderNode(node.GetChild(TerrainNode::NE));
-		RenderNode(node.GetChild(TerrainNode::SW));
-		RenderNode(node.GetChild(TerrainNode::SE));
-
-	}
-
-
-}
 
 
 

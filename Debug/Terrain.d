@@ -1,5 +1,5 @@
 Terrain.d Terrain.o: ../Terrain.cpp ../Terrain.h ../Vertex3D.h \
- ../Camera.h ../VectorUtils.h ../TerrainNode.h
+ ../Camera.h ../TerrainNode.h ../VectorUtils.h
 
 ../Terrain.h:
 
@@ -7,6 +7,6 @@ Terrain.d Terrain.o: ../Terrain.cpp ../Terrain.h ../Vertex3D.h \
 
 ../Camera.h:
 
-../VectorUtils.h:
-
 ../TerrainNode.h:
+
+../VectorUtils.h:
