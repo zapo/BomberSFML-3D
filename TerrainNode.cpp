@@ -10,6 +10,8 @@
 #include "Terrain.h"
 #include <iostream>
 
+namespace Bomber {
+
 unsigned int TerrainNode::MIN_SIZE = 2;
 
 TerrainNode::TerrainNode(const sf::Vector2i & center, unsigned int size, Terrain & t) : terrain(&t), center(center), size(size) {
@@ -143,5 +145,7 @@ TerrainNode::~TerrainNode() {
 	for(unsigned int i = 0; i < 4; i++) {
 		delete children[i];
 	}
+
+}
 
 }

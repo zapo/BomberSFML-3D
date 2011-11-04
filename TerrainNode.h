@@ -11,6 +11,8 @@
 #include <SFML/Graphics.hpp>
 #include "Vertex3D.h"
 
+namespace Bomber {
+
 class Terrain;
 
 class TerrainNode {
@@ -81,5 +83,7 @@ private :
 
 
 };
+
+}
 
 #endif /* TERRAINNODE_H_ */

@@ -13,6 +13,8 @@
 #include <SFML/Graphics.hpp>
 #include <list>
 
+namespace Bomber {
+
 class TerrainNode;
 class Camera;
 
@@ -109,5 +111,7 @@ private:
 	sf::Clock framerateAdapterTimer;
 
 };
+
+}
 
 #endif /* TERRAIN_H_ */

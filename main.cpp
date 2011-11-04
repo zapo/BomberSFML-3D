@@ -9,7 +9,10 @@
 #include <cstdlib>
 #include "Terrain.h"
 #include "FreeFlyCamera.h"
+#include "Window.h"
 #include <sstream>
+
+using namespace Bomber;
 
 
 bool showWireFrame = true;
@@ -70,8 +73,8 @@ void HandleEvents(sf::RenderWindow & window, Camera & camera, Terrain & t) {
 
 int main(int argc, char** argv) {
 
-	sf::RenderWindow window(sf::VideoMode(1024, 768, 32), "Test 3D");
-	window.SetActive(false);
+	Window window(sf::VideoMode(1024, 768, 32), "BomberSFML-3D");
+
 
 	sf::Vector2f center(window.GetWidth() / 2.f, window.GetHeight() / 2.f);
 

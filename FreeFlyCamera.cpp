@@ -10,6 +10,7 @@
 #include <iostream>
 #include "TerrainNode.h"
 
+namespace Bomber {
 
 FreeFlyCamera::FreeFlyCamera(const sf::Vector3f & position, const sf::Vector3f & target, sf::RenderWindow & win) {
 
@@ -63,7 +64,6 @@ void FreeFlyCamera::Animate(float dt, const sf::Input & input) {
 	}
 
 	CompileVectors();
-
 	SetCameraInternals();
 }
 
@@ -77,17 +77,6 @@ void FreeFlyCamera::SetCameraInternals() {
 
 		sf::Vector3f nc = position - Z * near;
 		sf::Vector3f fc = position - Z * far;
-
-		sf::Vector3f ntl = nc + (Y * (Hnear)) - (X * (Wnear));
-		sf::Vector3f ntr = nc + (Y * (Hnear)) + (X * (Wnear));
-		sf::Vector3f nbl = nc - (Y * (Hnear)) - (X * (Wnear));
-		sf::Vector3f nbr = nc - (Y * (Hnear)) + (X * (Wnear));
-
-		sf::Vector3f ftl = fc + (Y * (Hfar)) - (X * (Wfar));
-		sf::Vector3f ftr = fc + (Y * (Hfar)) + (X * (Wfar));
-		sf::Vector3f fbl = fc - (Y * (Hfar)) - (X * (Wfar));
-		sf::Vector3f fbr = fc - (Y * (Hfar)) + (X * (Wfar));
-
 
 		planes[NEAR].normal = -Z;
 		planes[NEAR].point = nc;
@@ -193,6 +182,7 @@ void FreeFlyCamera::SetMousePosition(sf::Vector2f position) {
 	mousePosition = position;
 }
 
+
 void FreeFlyCamera::SetSpeed(float speed) {
 	this->speed = speed;
 }
@@ -207,12 +197,9 @@ sf::Vector3f & FreeFlyCamera::GetTarget() {
 
 bool FreeFlyCamera::IsInFrustrum(TerrainNode & node) const {
 
-	if(node.isLeaf) return true;
-
 	int out;
 
 	for(int i = 0; i < 6; i++) {
-
 		// reset counters for corners in and out
 		out = 0;
 
@@ -224,16 +211,11 @@ bool FreeFlyCamera::IsInFrustrum(TerrainNode & node) const {
 				out++;
 			}
 		}
-
 		if(out == 4) {
 			return false;
 		}
-
 	}
-
 	return true;
-
-
 }
 
 float FreeFlyCamera::GetCurrentSpeed() {
@@ -250,6 +232,8 @@ float FreeFlyCamera::GetCurrentSpeed() {
 	}
 
 	return currentSpeed;
+}
+
 }
 
 

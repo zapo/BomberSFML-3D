@@ -10,6 +10,8 @@
 
 #include <SFML/Graphics.hpp>
 
+namespace Bomber {
+
 struct Vertex3D { // 32 bit
 
 	sf::Vector3f pos;  //Vertex
@@ -27,6 +29,8 @@ namespace Vertex {
 	enum Location {
 		 CENTER, TOPLEFT, TOP, TOPRIGHT, RIGHT, BOTTOMRIGHT, BOTTOM, BOTTOMLEFT, LEFT
 	};
+}
+
 }
 
 #endif /* VERTEX3D_H_ */

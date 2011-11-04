@@ -9,6 +9,8 @@
 #define CAMERA_H_
 
 #include <SFML/Graphics.hpp>
+
+namespace Bomber {
 class TerrainNode;
 class Camera {
 public:
@@ -30,5 +32,7 @@ public:
 
 protected:
 };
+
+}
 
 #endif /* CAMERA_H_ */

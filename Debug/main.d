@@ -1,5 +1,5 @@
-main.d main.o: ../main.cpp ../Terrain.h ../Vertex3D.h ../FreeFlyCamera.h \
- ../Camera.h ../VectorUtils.h
+main.d: ../main.cpp ../Terrain.h ../Vertex3D.h ../FreeFlyCamera.h \
+ ../Camera.h ../VectorUtils.h ../Window.h
 
 ../Terrain.h:
 
@@ -10,3 +10,5 @@ main.d main.o: ../main.cpp ../Terrain.h ../Vertex3D.h ../FreeFlyCamera.h \
 ../Camera.h:
 
 ../VectorUtils.h:
+
+../Window.h:

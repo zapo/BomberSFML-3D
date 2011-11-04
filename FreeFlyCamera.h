@@ -12,6 +12,8 @@
 #include "VectorUtils.h"
 #include <iostream>
 
+namespace Bomber {
+
 class TerrainNode;
 
 class FreeFlyCamera : public Camera {
@@ -90,5 +92,5 @@ private:
 
 	float Hnear, Wnear, Hfar, Wfar;
 };
-
+}
 #endif /* FREEFLYCAMERA_H_ */

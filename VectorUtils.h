@@ -11,6 +11,8 @@
 
 #define _UP_ (sf::Vector3f(0.f, 1.f, 0.f))
 
+namespace Bomber {
+
 namespace utils {
 
 template <class T>
@@ -89,6 +91,8 @@ std::ostream & operator<<(std::ostream & stream, const sf::Vector2<T> & vec) {
 
 	stream << "x : " << vec.x << " y : " << vec.y;
 	return stream;
+
+}
 
 }
 

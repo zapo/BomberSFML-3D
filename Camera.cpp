@@ -7,9 +7,13 @@
 
 #include "Camera.h"
 
+namespace Bomber {
+
 Camera::Camera() {
 }
 
 Camera::~Camera() {
 	// TODO Auto-generated destructor stub
+}
+
 }

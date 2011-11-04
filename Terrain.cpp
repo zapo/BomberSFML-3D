@@ -16,6 +16,8 @@
 #include "TerrainNode.h"
 #include "VectorUtils.h"
 
+namespace Bomber {
+
 Terrain::Terrain(const std::string & texturePath) {
 	maxResolution = 3.f;
 	minResolution = 1.f;
@@ -27,8 +29,6 @@ Terrain::Terrain(const std::string & texturePath) {
 	}
 	mainTexture.SetSmooth(true);
 	heights = NULL;
-
-
 
 }
 
@@ -140,10 +140,10 @@ void Terrain::Render(float framerate) {
 	numbNodes = 0;
 	numbTriangles = 0;
 
-	if(camera->IsInFrustrum(*root)) {
+	//if(camera->IsInFrustrum(*root)) {
 		RefineNode(*root);
 		numbNodes ++;
-	}
+	//}
 
 }
 
@@ -214,6 +214,8 @@ void Terrain::RefineNode(TerrainNode & node) {
 	}
 
 	node.Render();
+
+}
 
 }
 

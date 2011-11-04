@@ -8,6 +8,7 @@ CPP_SRCS += \
 ../FreeFlyCamera.cpp \
 ../Terrain.cpp \
 ../TerrainNode.cpp \
+../Window.cpp \
 ../main.cpp 
 
 OBJS += \
@@ -15,6 +16,7 @@ OBJS += \
 ./FreeFlyCamera.o \
 ./Terrain.o \
 ./TerrainNode.o \
+./Window.o \
 ./main.o 
 
 CPP_DEPS += \
@@ -22,6 +24,7 @@ CPP_DEPS += \
 ./FreeFlyCamera.d \
 ./Terrain.d \
 ./TerrainNode.d \
+./Window.d \
 ./main.d 
 
 
