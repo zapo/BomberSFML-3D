@@ -1,12 +1,12 @@
-Terrain.d: ../Terrain.cpp ../Terrain.h ../Vertex3D.h ../Camera.h \
- ../TerrainNode.h ../VectorUtils.h
+Terrain.d: ../Terrain.cpp ../Terrain.h ../Camera.h ../TerrainNode.h \
+ ../Vertex3D.h ../VectorUtils.h
 
 ../Terrain.h:
-
-../Vertex3D.h:
 
 ../Camera.h:
 
 ../TerrainNode.h:
+
+../Vertex3D.h:
 
 ../VectorUtils.h:

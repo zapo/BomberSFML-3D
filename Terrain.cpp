@@ -18,18 +18,20 @@
 
 namespace Bomber {
 
-Terrain::Terrain(const std::string & texturePath) {
+Terrain::Terrain(const std::string & texturePath, Camera & camera) {
 	maxResolution = 3.f;
 	minResolution = 1.f;
 
+	this->camera = &camera;
+
 	if(mainTexture.LoadFromFile(texturePath)) {
 		std::cout << "texture loaded" << std::endl;
-
-
 	}
 	mainTexture.SetSmooth(true);
 	heights = NULL;
 
+
+	//buffer = new VertexBuffer(GL_DYNAMIC_DRAW, )
 }
 
 Terrain::~Terrain() {
@@ -118,7 +120,6 @@ void Terrain::Render(float framerate) {
 
 void Terrain::RefineNode(TerrainNode & node) {
 
-
 	unsigned int size = node.GetSize();
 
 	float distance = ( float ) utils::VectorLength(node.GetVertex(Vertex::CENTER)->pos, camera->GetPosition());
@@ -160,8 +161,15 @@ void Terrain::RefineNode(TerrainNode & node) {
 			numbNodes ++;
 			numbTriangles += 8;
 		}
+	}
+
+
+	if(node.isLeaf) {
+
+
 
 	}
+
 
 }
 

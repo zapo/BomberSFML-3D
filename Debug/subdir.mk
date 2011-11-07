@@ -8,6 +8,7 @@ CPP_SRCS += \
 ../FreeFlyCamera.cpp \
 ../Terrain.cpp \
 ../TerrainNode.cpp \
+../VertexBuffer.cpp \
 ../Window.cpp \
 ../main.cpp 
 
@@ -16,6 +17,7 @@ OBJS += \
 ./FreeFlyCamera.o \
 ./Terrain.o \
 ./TerrainNode.o \
+./VertexBuffer.o \
 ./Window.o \
 ./main.o 
 
@@ -24,6 +26,7 @@ CPP_DEPS += \
 ./FreeFlyCamera.d \
 ./Terrain.d \
 ./TerrainNode.d \
+./VertexBuffer.d \
 ./Window.d \
 ./main.d 
 

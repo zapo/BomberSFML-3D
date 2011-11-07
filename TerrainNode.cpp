@@ -114,6 +114,7 @@ TerrainNode::TerrainNode(const sf::Vector2i & center, unsigned int size, Terrain
 	vertices[Vertex::LEFT] = left;
 
 
+	t.nodes.push_back(this);
 }
 
 void TerrainNode::Render() {

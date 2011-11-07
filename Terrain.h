@@ -8,8 +8,6 @@
 #ifndef TERRAIN_H_
 #define TERRAIN_H_
 
-#include "Vertex3D.h"
-#include <boost/shared_ptr.hpp>
 #include <SFML/Graphics.hpp>
 #include <list>
 
@@ -17,7 +15,7 @@ namespace Bomber {
 
 class TerrainNode;
 class Camera;
-
+class VertexBuffer;
 
 class Terrain : public sf::Drawable {
 public:
@@ -26,7 +24,7 @@ public:
 		UNKNOWN, TRUE, FALSE
 	};
 
-	Terrain(const std::string & texturePath);
+	Terrain(const std::string & texturePath, Camera &);
 	virtual ~Terrain();
 
 	bool LoadHeightMap(const std::string & filename);
@@ -99,6 +97,8 @@ public:
 		return minResolution;
 	}
 
+	std::vector<TerrainNode*> nodes;
+
 private:
 
 	sf::Uint32 GetRelHeightAt(unsigned int x, unsigned y) const;
@@ -113,8 +113,8 @@ private:
 	sf::Uint32 * heights;
 	Camera * camera;
 
-	GLuint vbo;
-	GLuint ibo;
+
+
 	unsigned int size;
 
 	float framerate;
@@ -125,9 +125,7 @@ private:
 	unsigned int numbNodes;
 	unsigned int numbTriangles;
 
-	std::list<Vertex3D> vertices;
-	std::list<unsigned int> indexes;
-
+	VertexBuffer * buffer;
 	sf::Clock framerateAdapterTimer;
 
 };

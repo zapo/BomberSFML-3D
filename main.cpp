@@ -4,9 +4,10 @@
  *  Created on: 2011-02-23
  *      Author: zapo
  */
-
+#include <GL/glew.h>
 #include <iostream>
 #include <cstdlib>
+
 #include "Terrain.h"
 #include "FreeFlyCamera.h"
 #include "Window.h"
@@ -73,6 +74,7 @@ void HandleEvents(sf::RenderWindow & window, Camera & camera, Terrain & t) {
 
 int main(int argc, char** argv) {
 
+
 	Window window(sf::VideoMode(1024, 768, 32), "BomberSFML-3D");
 
 
@@ -84,8 +86,15 @@ int main(int argc, char** argv) {
 	sf::View interface;
 	sf::String info;
 	info.SetPosition(0.f, 0.f);
+	FreeFlyCamera camera(
+		sf::Vector3f(0, 0, 0),
+		sf::Vector3f(0, 0, 0),
+		window
+	);
 
-	Terrain t("resources/heightmap2.png");
+	camera.SetSpeed(10.f);
+
+	Terrain t("resources/heightmap2.png", camera);
 
 	t.SetTextureRepeat(true);
 	t.SetPosition(0, 0);
@@ -93,22 +102,10 @@ int main(int argc, char** argv) {
 	t.SetScale(sf::Vector3i(1, 1, 1));
 	t.LoadHeightMap("resources/heightmap2.png");
 
-
-	sf::Vector2f terrainCenter = t.GetCenter();
-
-	FreeFlyCamera camera(
-			sf::Vector3f(0, 0, 0),
-			sf::Vector3f(terrainCenter.x, 0, terrainCenter.y),
-			window
-	);
-
-	camera.SetSpeed(10.f);
-	t.SetCamera(camera);
-
 	window.PreserveOpenGLStates(true);
 
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
-
+	t.Update();
 	while(window.IsOpened()) {
 
 		window.SetCursorPosition(center.x, center.y);
@@ -127,7 +124,7 @@ int main(int argc, char** argv) {
 
 		int framerate = 1.f/window.GetFrameTime();
 
-		t.Update();
+
 		t.Render(framerate);
 
 
