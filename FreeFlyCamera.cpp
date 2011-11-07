@@ -207,7 +207,7 @@ bool FreeFlyCamera::IsInFrustrum(TerrainNode & node) const {
 
 			float d = -(utils::DotProduct(planes[i].normal, planes[i].point));
 
-			if (d + utils::DotProduct(planes[i].normal, node.GetVertex((Vertex::Location)k).pos) < 0) {
+			if (d + utils::DotProduct(planes[i].normal, node.GetVertex((Vertex::Location)k)->pos) < 0) {
 				out++;
 			}
 		}

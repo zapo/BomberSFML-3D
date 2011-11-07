@@ -19,7 +19,7 @@ class TerrainNode {
 public:
 
 	enum Type {
-		NW, NE, SW, SE
+		NW = 0, NE = 1, SW = 2, SE = 3
 	};
 
 
@@ -28,6 +28,18 @@ public:
 
 	unsigned int GetSize() const {
 		return size;
+	}
+
+	void Disable(){
+		for(unsigned int i=0; i < 9; i++) {
+			vertices[i]->enabled = false;
+		}
+	}
+
+	void Enable(){
+		for(unsigned int i=0; i < 9; i++) {
+			vertices[i]->enabled = true;
+		}
 	}
 
 	void SetSize(unsigned int _size) {
@@ -42,20 +54,20 @@ public:
 		center = _center;
 	}
 
-	void SetVertex(Vertex::Location loc, const Vertex3D & vertex) {
+	void SetVertex(Vertex::Location loc, Vertex3D * vertex) {
 		vertices[loc] = vertex;
 	}
 
-	Vertex3D & GetVertex(Vertex::Location loc) {
+	Vertex3D * GetVertex(Vertex::Location loc) {
 		return vertices[loc];
 	}
 
-	void SetChild(Type type, TerrainNode & node) {
-		children[type] = &node;
+	void SetChild(Type type, TerrainNode * node) {
+		children[type] = node;
 	}
 
-	TerrainNode & GetChild(Type type) {
-		return *(children[type]);
+	TerrainNode * GetChild(Type type) {
+		return children[type];
 	}
 
 	sf::IntRect & GetBoundBox() {
@@ -77,7 +89,7 @@ private :
 	sf::Vector2i center;
 	unsigned int size;
 
-	Vertex3D vertices[9];
+	Vertex3D * vertices[9];
 
 	TerrainNode * children[4];
 

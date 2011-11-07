@@ -90,14 +90,14 @@ int main(int argc, char** argv) {
 	t.SetTextureRepeat(true);
 	t.SetPosition(0, 0);
 
-	t.SetScale(sf::Vector3i(1, 2, 1));
+	t.SetScale(sf::Vector3i(1, 0, 1));
 	t.LoadHeightMap("resources/heightmap2.png");
 
 
 	sf::Vector2f terrainCenter = t.GetCenter();
 
 	FreeFlyCamera camera(
-			sf::Vector3f(/*terrainCenter.x, t.GetHeightAt(terrainCenter.x, terrainCenter.y), terrainCenter.y*/0, 0, 0),
+			sf::Vector3f(0, 0, 0),
 			sf::Vector3f(terrainCenter.x, 0, terrainCenter.y),
 			window
 	);
@@ -122,9 +122,11 @@ int main(int argc, char** argv) {
 
 		glClearColor(125.f/255.f, 163.f/255.f, 246.f/255.f, 0.f);
 
+
 		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
-
+		t.Update();
+		t.Render(1.f / window.GetFrameTime());
 
 		camera.Animate(window.GetFrameTime(), window.GetInput());
 		camera.Look();
@@ -135,7 +137,10 @@ int main(int argc, char** argv) {
 
 		glColor3ub(255, 255, 255);
 
-		t.Render(1.f / window.GetFrameTime());
+
+
+
+
 
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
@@ -147,6 +152,7 @@ int main(int argc, char** argv) {
 		infoStr << "y : " 			<< camera.GetPosition().y << std::endl;
 		infoStr << "z : " 			<< camera.GetPosition().z << std::endl;
 		infoStr << "Triangles # : " << t.GetNbTriangles() << std::endl;
+		infoStr << "Nodes # : " << t.GetNbNodes() << std::endl;
 
 		info.SetText(infoStr.str());
 

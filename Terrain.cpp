@@ -62,25 +62,6 @@ sf::Uint32 Terrain::GetHeightAt(unsigned int x, unsigned z) const {
 	return height * scale.y;
 }
 
-void Terrain::SetScale(const sf::Vector3i & _scale) {
-	scale = _scale;
-}
-
-sf::Uint32 Terrain::GetNbNodes() const {
-	return numbNodes;
-}
-
-void Terrain::SetTextureRepeat(bool repeat) {
-	textureRepeat = repeat;
-}
-
-void Terrain::SetCamera(Camera & camera) {
-	this->camera = &camera;
-}
-Camera & Terrain::GetCamera() {
-	return *camera;
-}
-
 
 bool Terrain::LoadHeightMap(const std::string & filename) {
 
@@ -120,31 +101,22 @@ bool Terrain::LoadHeightMap(const std::string & filename) {
 	return true;
 }
 
+void Terrain::Update() {
+
+	numbTriangles = 0;
+	numbNodes = 0;
+
+	RefineNode(*root);
+}
+
 
 void Terrain::Render(float framerate) {
 
 	this->framerate = framerate;
 
-	glDisable(GL_TEXTURE_2D);
-	glEnable(GL_TEXTURE_2D);
-
-	mainTexture.Bind();
-
-	if(textureRepeat) {
-
-		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
-		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
-
+	if(camera->IsInFrustrum(*root)) {
+		root->Render();
 	}
-
-	numbNodes = 0;
-	numbTriangles = 0;
-
-	//if(camera->IsInFrustrum(*root)) {
-		RefineNode(*root);
-		numbNodes ++;
-	//}
-
 }
 
 void Terrain::RefineNode(TerrainNode & node) {
@@ -152,7 +124,7 @@ void Terrain::RefineNode(TerrainNode & node) {
 
 	unsigned int size = node.GetSize();
 
-	float distance = ( float ) utils::VectorLength(node.GetVertex(Vertex::CENTER).pos, camera->GetPosition());
+	float distance = ( float ) utils::VectorLength(node.GetVertex(Vertex::CENTER)->pos, camera->GetPosition());
 
 	float maxheight = 0;
 	float _heights[5];
@@ -173,47 +145,29 @@ void Terrain::RefineNode(TerrainNode & node) {
 
 	float f = distance / ((float) size * std::max(maxResolution, 0.1f) * std::max(maxheight ,1.f));
 
-	if(f < 1.0f && size / 2 >= TerrainNode::MIN_SIZE) {
+	if(f < 1.0f && (size / 2) >= TerrainNode::MIN_SIZE) {
 
 		//subdivide
 
 		node.isLeaf = false;
 
-		for(unsigned int i=0; i < 9; i++) {
-			node.GetVertex((Vertex::Location)i).enabled = false;
-		}
+		node.Disable();
 
-		if(camera->IsInFrustrum(node.GetChild(TerrainNode::NW))) {
-			RefineNode(node.GetChild(TerrainNode::NW));
-			numbNodes ++;
-		}
-
-		if(camera->IsInFrustrum(node.GetChild(TerrainNode::NE))) {
-			RefineNode(node.GetChild(TerrainNode::NE));
-			numbNodes ++;
-		}
-
-		if(camera->IsInFrustrum(node.GetChild(TerrainNode::SW))) {
-			RefineNode(node.GetChild(TerrainNode::SW));
-			numbNodes ++;
-		}
-
-		if(camera->IsInFrustrum(node.GetChild(TerrainNode::SE))) {
-			RefineNode(node.GetChild(TerrainNode::SE));
+		for(unsigned int i=0; i <= 3; i++) {
+			RefineNode(*(node.GetChild((TerrainNode::Type)i)));
 			numbNodes ++;
 		}
 
 	} else {
 		node.isLeaf = true;
 
-		for(unsigned int i=0; i < 9; i++) {
-			node.GetVertex((Vertex::Location)i).enabled = true;
+		if(camera->IsInFrustrum(node)) {
+			node.Enable();
+			numbNodes ++;
+			numbTriangles += 8;
 		}
 
-		numbTriangles += 8;
 	}
-
-	node.Render();
 
 }
 

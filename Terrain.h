@@ -36,18 +36,39 @@ public:
 
 	void Render(float framerate);
 	void Update();
-	sf::Uint32 GetNbNodes() const;
 
 	sf::Uint32 GetNbTriangles() const {
 		return numbTriangles;
 	}
 
-	void SetTextureRepeat(bool);
+	void SetNbTriangles(sf::Uint32 nb) {
+		numbTriangles = nb;
+	}
 
-	void SetCamera(Camera & camera);
-	Camera & GetCamera();
+	void SetScale(const sf::Vector3i & _scale) {
+		scale = _scale;
+	}
 
-	void SetScale(const sf::Vector3i &);
+	sf::Uint32 GetNbNodes() const {
+		return numbNodes;
+	}
+
+	void SetNbNodes(sf::Uint32 nb) {
+		numbNodes = nb;
+	}
+
+	void SetTextureRepeat(bool repeat) {
+		textureRepeat = repeat;
+	}
+
+	void SetCamera(Camera & camera) {
+		this->camera = &camera;
+	}
+	Camera & GetCamera() {
+		return *camera;
+	}
+
+
 	const sf::Vector3i & GetScale() {
 		return scale;
 	}
@@ -106,7 +127,6 @@ private:
 
 	std::list<Vertex3D> vertices;
 	std::list<unsigned int> indexes;
-	GLuint VBO, IBO;
 
 	sf::Clock framerateAdapterTimer;
 
