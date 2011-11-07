@@ -52,63 +52,63 @@ TerrainNode::TerrainNode(const sf::Vector2i & center, unsigned int size, Terrain
 
 	Vertex3D * vcenter = new Vertex3D;
 	vcenter->pos = sf::Vector3f(center.x, terrain->GetHeightAt(center.x, center.y), center.y);
-	vcenter->enabled = false;
+	vcenter->enabled = true;
 	vcenter->tex = sf::Vector2f(texCenter.x, texCenter.y);
 
 	vertices[Vertex::CENTER] = vcenter;
 
 	Vertex3D * vtopleft = new Vertex3D;
 	vtopleft->pos = sf::Vector3f(boundBox.Left, terrain->GetHeightAt(boundBox.Left, boundBox.Top), boundBox.Top);
-	vtopleft->enabled = false;
+	vtopleft->enabled = true;
 	vtopleft->tex = sf::Vector2f(texCoords.Left, texCoords.Top);
 
 	vertices[Vertex::TOPLEFT] = vtopleft;
 
 	Vertex3D * vtop = new Vertex3D;
 	vtop->pos = sf::Vector3f(center.x, terrain->GetHeightAt(center.x, boundBox.Top), boundBox.Top);
-	vtop->enabled = false;
+	vtop->enabled = true;
 	vtop->tex = sf::Vector2f(texCenter.x, texCoords.Top);
 
 	vertices[Vertex::TOP] = vtop;
 
 	Vertex3D * vtopright = new Vertex3D;
 	vtopright->pos = sf::Vector3f(boundBox.Right, terrain->GetHeightAt(boundBox.Right, boundBox.Top), boundBox.Top);
-	vtopright->enabled = false;
+	vtopright->enabled = true;
 	vtopright->tex = sf::Vector2f(texCoords.Right, texCoords.Top);
 
 	vertices[Vertex::TOPRIGHT] = vtopright;
 
 	Vertex3D * vright = new Vertex3D;
 	vright->pos = sf::Vector3f(boundBox.Right, terrain->GetHeightAt(boundBox.Right, center.y), center.y);
-	vright->enabled = false;
+	vright->enabled = true;
 	vright->tex = sf::Vector2f(texCoords.Right, texCenter.y);
 
 	vertices[Vertex::RIGHT] = vright;
 
 	Vertex3D * vbottomright = new Vertex3D;
 	vbottomright->pos = sf::Vector3f(boundBox.Right, terrain->GetHeightAt(boundBox.Right, boundBox.Bottom), boundBox.Bottom);
-	vbottomright->enabled = false;
+	vbottomright->enabled = true;
 	vbottomright->tex = sf::Vector2f(texCoords.Right, texCoords.Bottom);
 
 	vertices[Vertex::BOTTOMRIGHT] = vbottomright;
 
 	Vertex3D * vbottom = new Vertex3D;
 	vbottom->pos = sf::Vector3f(center.x, terrain->GetHeightAt(center.x, boundBox.Bottom),  boundBox.Bottom);
-	vbottom->enabled = false;
+	vbottom->enabled = true;
 	vbottom->tex = sf::Vector2f(texCenter.x, texCoords.Bottom);
 
 	vertices[Vertex::BOTTOM] = vbottom;
 
 	Vertex3D * vbottomleft = new Vertex3D;
 	vbottomleft->pos = sf::Vector3f(boundBox.Left, terrain->GetHeightAt(boundBox.Left, boundBox.Bottom), boundBox.Bottom);
-	vbottomleft->enabled = false;
+	vbottomleft->enabled = true;
 	vbottomleft->tex = sf::Vector2f(texCoords.Left, texCoords.Bottom);
 
 	vertices[Vertex::BOTTOMLEFT] = vbottomleft;
 
 	Vertex3D * left = new Vertex3D;
 	left->pos = sf::Vector3f(boundBox.Left, terrain->GetHeightAt(boundBox.Left, center.y), center.y);
-	left->enabled = false;
+	left->enabled = true;
 	left->tex = sf::Vector2f(texCoords.Left, texCenter.y);
 
 	vertices[Vertex::LEFT] = left;
@@ -117,37 +117,40 @@ TerrainNode::TerrainNode(const sf::Vector2i & center, unsigned int size, Terrain
 }
 
 void TerrainNode::Render() {
-	glBegin(GL_TRIANGLE_FAN);
 
-	Vertex3D * firstEnabled = NULL;
+	if(!terrain->GetCamera().IsInFrustrum(*this)) {
+		return;
+	}
 
-	for(int i=0; i < 9; i++) {
+	if(isLeaf) {
+		glBegin(GL_TRIANGLE_FAN);
 
-		if(vertices[i]->enabled) {
+		Vertex3D * firstEnabled = NULL;
 
-			if(firstEnabled == NULL && i != Vertex::CENTER) {
-				firstEnabled = vertices[i];
+		for(int i=0; i < 9; i++) {
+			if(vertices[i]->enabled) {
+
+				if(firstEnabled == NULL && i != Vertex::CENTER) {
+					firstEnabled = vertices[i];
+				}
+
+				//glTexCoord2f(vertices[i].tex.x, vertices[i].tex.y);
+				glVertex3f(vertices[i]->pos.x, vertices[i]->pos.y, vertices[i]->pos.z );
 			}
-
-			//glTexCoord2f(vertices[i].tex.x, vertices[i].tex.y);
-			glVertex3f(vertices[i]->pos.x, vertices[i]->pos.y, vertices[i]->pos.z );
 		}
-	}
 
-	if(firstEnabled != NULL) {
-		//glTexCoord2f(firstEnabled->tex.x, firstEnabled->tex.y);
-		glVertex3f(firstEnabled->pos.x, firstEnabled->pos.y, firstEnabled->pos.z);
-	}
+		if(firstEnabled != NULL) {
+			//glTexCoord2f(firstEnabled->tex.x, firstEnabled->tex.y);
+			glVertex3f(firstEnabled->pos.x, firstEnabled->pos.y, firstEnabled->pos.z);
+		}
 
-	glEnd();
-
-	for(unsigned int i=0; i <= 3; i++) {
-		if(children[i] != NULL && terrain->GetCamera().IsInFrustrum(*(children[i]))) {
+		glEnd();
+	} else {
+		for(unsigned int i=0; i <= 3; i++) {
 			children[i]->Render();
 		}
 	}
 
-	Disable();
 }
 
 TerrainNode::~TerrainNode() {

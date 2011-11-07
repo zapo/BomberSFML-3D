@@ -27,6 +27,7 @@ public:
 	virtual bool IsInFrustrum(TerrainNode & node) const = 0;
 
 	virtual float GetSensivity() const = 0;
+	virtual void SetSensivity(float) = 0;
 	virtual float GetCurrentSpeed() = 0;
 
 

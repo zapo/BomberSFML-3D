@@ -113,10 +113,7 @@ void Terrain::Update() {
 void Terrain::Render(float framerate) {
 
 	this->framerate = framerate;
-
-	if(camera->IsInFrustrum(*root)) {
-		root->Render();
-	}
+	root->Render();
 }
 
 void Terrain::RefineNode(TerrainNode & node) {
@@ -151,8 +148,6 @@ void Terrain::RefineNode(TerrainNode & node) {
 
 		node.isLeaf = false;
 
-		node.Disable();
-
 		for(unsigned int i=0; i <= 3; i++) {
 			RefineNode(*(node.GetChild((TerrainNode::Type)i)));
 			numbNodes ++;
@@ -162,7 +157,6 @@ void Terrain::RefineNode(TerrainNode & node) {
 		node.isLeaf = true;
 
 		if(camera->IsInFrustrum(node)) {
-			node.Enable();
 			numbNodes ++;
 			numbTriangles += 8;
 		}
