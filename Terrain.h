@@ -7,7 +7,7 @@
 
 #ifndef TERRAIN_H_
 #define TERRAIN_H_
-
+#include "Vertex3D.h"
 #include <SFML/Graphics.hpp>
 #include <list>
 
@@ -20,17 +20,14 @@ class VertexBuffer;
 class Terrain : public sf::Drawable {
 public:
 
-	enum NodeState {
-		UNKNOWN, TRUE, FALSE
-	};
-
 	Terrain(const std::string & texturePath, Camera &);
 	virtual ~Terrain();
 
 	bool LoadHeightMap(const std::string & filename);
+	bool GenMap();
 	void UnloadHeightMap();
 
-	sf::Uint32 GetHeightAt(unsigned int x, unsigned y) const;
+	float GetHeightAt(unsigned int x, unsigned y) const;
 
 	void Render(float framerate);
 	void Update();
@@ -43,12 +40,16 @@ public:
 		numbTriangles = nb;
 	}
 
-	void SetScale(const sf::Vector3i & _scale) {
+	void SetScale(const sf::Vector3f & _scale) {
 		scale = _scale;
 	}
 
 	sf::Uint32 GetNbNodes() const {
 		return numbNodes;
+	}
+
+	sf::Uint32 GetVisibleNodes() const {
+		return numbNodes - numbCulledNodes;
 	}
 
 	void SetNbNodes(sf::Uint32 nb) {
@@ -67,7 +68,7 @@ public:
 	}
 
 
-	const sf::Vector3i & GetScale() {
+	const sf::Vector3f & GetScale() {
 		return scale;
 	}
 
@@ -77,6 +78,7 @@ public:
 
 	void RefineNode(TerrainNode & node);
 
+	bool Subdivide(TerrainNode & node);
 	void Render(sf::RenderTarget &) const {
 
 	}
@@ -101,16 +103,24 @@ public:
 
 private:
 
-	sf::Uint32 GetRelHeightAt(unsigned int x, unsigned y) const;
+	std::vector<Vertex3D> vertices;
+	std::vector<Vertex3D>::iterator v_it;
+
+	std::vector<GLuint> indexes;
+	std::vector<GLuint>::iterator i_it;
+
+	static const unsigned int ordering[24];
+
+	float GetRelHeightAt(unsigned int x, unsigned y) const;
 
 	TerrainNode * root;
 
 	bool textureRepeat;
-	sf::Vector3i scale;
+	sf::Vector3f scale;
 	sf::Uint8 precision;
 	sf::Image mainTexture;
 	sf::Image heightMap;
-	sf::Uint32 * heights;
+	float * heights;
 	Camera * camera;
 
 
@@ -122,8 +132,7 @@ private:
 	float maxResolution;
 	float minResolution;
 
-	unsigned int numbNodes;
-	unsigned int numbTriangles;
+	unsigned int numbNodes, numbCulledNodes, numbTriangles;
 
 	VertexBuffer * buffer;
 	sf::Clock framerateAdapterTimer;

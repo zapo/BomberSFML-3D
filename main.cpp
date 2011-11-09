@@ -70,6 +70,8 @@ void HandleEvents(sf::RenderWindow & window, Camera & camera, Terrain & t) {
 			t.SetMaxResolution(max);
 		}
 	}
+
+	t.Update();
 }
 
 int main(int argc, char** argv) {
@@ -85,7 +87,9 @@ int main(int argc, char** argv) {
 
 	sf::View interface;
 	sf::String info;
+
 	info.SetPosition(0.f, 0.f);
+
 	FreeFlyCamera camera(
 		sf::Vector3f(0, 0, 0),
 		sf::Vector3f(0, 0, 0),
@@ -96,16 +100,25 @@ int main(int argc, char** argv) {
 
 	Terrain t("resources/heightmap2.png", camera);
 
+	t.GenMap();
+
 	t.SetTextureRepeat(true);
 	t.SetPosition(0, 0);
 
-	t.SetScale(sf::Vector3i(1, 1, 1));
-	t.LoadHeightMap("resources/heightmap2.png");
+	if (!t.LoadHeightMap("gen.bmp")) {
+		return EXIT_FAILURE;
+	}
 
 	window.PreserveOpenGLStates(true);
 
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+	//glEnable(GL_LIGHTING) ;
+	//glEnable(GL_LIGHT0);
+	glEnable(GL_DEPTH_TEST);
+
+
 	t.Update();
+
 	while(window.IsOpened()) {
 
 		window.SetCursorPosition(center.x, center.y);
@@ -115,35 +128,25 @@ int main(int argc, char** argv) {
 
 		HandleEvents(window, camera, t);
 
-		window.SetView(window.GetDefaultView());
-
 		glClearColor(125.f/255.f, 163.f/255.f, 246.f/255.f, 0.f);
-
-
 		glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
+
+
 		int framerate = 1.f/window.GetFrameTime();
-
-
-		t.Render(framerate);
-
 
 		camera.Animate(window.GetFrameTime(), window.GetInput());
 		camera.Look();
 
-		glEnable(GL_DEPTH_TEST);
-		glMatrixMode(GL_MODELVIEW);
-		glLoadIdentity();
 
-		glColor3ub(255, 255, 255);
-
+		t.Render(framerate);
 
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 		std::stringstream infoStr;
 
 
-		infoStr << framerate 		<< " fps" << std::endl;
+		infoStr << framerate 		<< " FPS" << std::endl;
 		infoStr << "x : " 			<< camera.GetPosition().x << std::endl;
 		infoStr << "y : " 			<< camera.GetPosition().y << std::endl;
 		infoStr << "z : " 			<< camera.GetPosition().z << std::endl;
@@ -152,7 +155,10 @@ int main(int argc, char** argv) {
 
 		info.SetText(infoStr.str());
 
+
 		window.Draw(info);
+
+
 
 		if(showWireFrame) {
 			glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);

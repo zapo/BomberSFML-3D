@@ -50,109 +50,49 @@ TerrainNode::TerrainNode(const sf::Vector2i & center, unsigned int size, Terrain
 	sf::FloatRect texCoords = terrain->GetMainTexture().GetTexCoords(sf::IntRect(boundBox.Left, boundBox.Top, boundBox.Right + 1, boundBox.Bottom + 1));
 	sf::Vector2f texCenter(texCoords.Left + texCoords.GetWidth() / 2, texCoords.Top + texCoords.GetHeight() / 2);
 
-	Vertex3D * vcenter = new Vertex3D;
-	vcenter->pos = sf::Vector3f(center.x, terrain->GetHeightAt(center.x, center.y), center.y);
-	vcenter->enabled = true;
-	vcenter->tex = sf::Vector2f(texCenter.x, texCenter.y);
+	for(unsigned int i=0; i < 9; i++) {
 
-	vertices[Vertex::CENTER] = vcenter;
+		Vertex3D * vertex = new Vertex3D;
+		vertex->col = sf::Vector3f(1, 1, 1);
+		vertex->enabled = true;
 
-	Vertex3D * vtopleft = new Vertex3D;
-	vtopleft->pos = sf::Vector3f(boundBox.Left, terrain->GetHeightAt(boundBox.Left, boundBox.Top), boundBox.Top);
-	vtopleft->enabled = true;
-	vtopleft->tex = sf::Vector2f(texCoords.Left, texCoords.Top);
+		switch((Vertex::Location)i) {
 
-	vertices[Vertex::TOPLEFT] = vtopleft;
+		case Vertex::CENTER:
+			vertex->pos = sf::Vector3f(center.x, terrain->GetHeightAt(center.x, center.y), center.y);
+			break;
+		case Vertex::TOPLEFT:
+			vertex->pos = sf::Vector3f(boundBox.Left, terrain->GetHeightAt(boundBox.Left, boundBox.Top), boundBox.Top);
+			break;
+		case Vertex::TOP:
+			vertex->pos = sf::Vector3f(center.x, terrain->GetHeightAt(center.x, boundBox.Top), boundBox.Top);
+			break;
+		case Vertex::TOPRIGHT:
+			vertex->pos = sf::Vector3f(boundBox.Right, terrain->GetHeightAt(boundBox.Right, boundBox.Top), boundBox.Top);
+			break;
+		case Vertex::RIGHT:
+			vertex->pos = sf::Vector3f(boundBox.Right, terrain->GetHeightAt(boundBox.Right, center.y), center.y);
+			break;
+		case Vertex::BOTTOMRIGHT:
+			vertex->pos = sf::Vector3f(boundBox.Right, terrain->GetHeightAt(boundBox.Right, boundBox.Bottom), boundBox.Bottom);
+			break;
+		case Vertex::BOTTOM:
+			vertex->pos = sf::Vector3f(center.x, terrain->GetHeightAt(center.x, boundBox.Bottom),  boundBox.Bottom);
+			break;
+		case Vertex::BOTTOMLEFT:
+			vertex->pos = sf::Vector3f(boundBox.Left, terrain->GetHeightAt(boundBox.Left, boundBox.Bottom), boundBox.Bottom);
+			break;
+		case Vertex::LEFT:
+			vertex->pos = sf::Vector3f(boundBox.Left, terrain->GetHeightAt(boundBox.Left, center.y), center.y);
+			break;
+		}
 
-	Vertex3D * vtop = new Vertex3D;
-	vtop->pos = sf::Vector3f(center.x, terrain->GetHeightAt(center.x, boundBox.Top), boundBox.Top);
-	vtop->enabled = true;
-	vtop->tex = sf::Vector2f(texCenter.x, texCoords.Top);
-
-	vertices[Vertex::TOP] = vtop;
-
-	Vertex3D * vtopright = new Vertex3D;
-	vtopright->pos = sf::Vector3f(boundBox.Right, terrain->GetHeightAt(boundBox.Right, boundBox.Top), boundBox.Top);
-	vtopright->enabled = true;
-	vtopright->tex = sf::Vector2f(texCoords.Right, texCoords.Top);
-
-	vertices[Vertex::TOPRIGHT] = vtopright;
-
-	Vertex3D * vright = new Vertex3D;
-	vright->pos = sf::Vector3f(boundBox.Right, terrain->GetHeightAt(boundBox.Right, center.y), center.y);
-	vright->enabled = true;
-	vright->tex = sf::Vector2f(texCoords.Right, texCenter.y);
-
-	vertices[Vertex::RIGHT] = vright;
-
-	Vertex3D * vbottomright = new Vertex3D;
-	vbottomright->pos = sf::Vector3f(boundBox.Right, terrain->GetHeightAt(boundBox.Right, boundBox.Bottom), boundBox.Bottom);
-	vbottomright->enabled = true;
-	vbottomright->tex = sf::Vector2f(texCoords.Right, texCoords.Bottom);
-
-	vertices[Vertex::BOTTOMRIGHT] = vbottomright;
-
-	Vertex3D * vbottom = new Vertex3D;
-	vbottom->pos = sf::Vector3f(center.x, terrain->GetHeightAt(center.x, boundBox.Bottom),  boundBox.Bottom);
-	vbottom->enabled = true;
-	vbottom->tex = sf::Vector2f(texCenter.x, texCoords.Bottom);
-
-	vertices[Vertex::BOTTOM] = vbottom;
-
-	Vertex3D * vbottomleft = new Vertex3D;
-	vbottomleft->pos = sf::Vector3f(boundBox.Left, terrain->GetHeightAt(boundBox.Left, boundBox.Bottom), boundBox.Bottom);
-	vbottomleft->enabled = true;
-	vbottomleft->tex = sf::Vector2f(texCoords.Left, texCoords.Bottom);
-
-	vertices[Vertex::BOTTOMLEFT] = vbottomleft;
-
-	Vertex3D * left = new Vertex3D;
-	left->pos = sf::Vector3f(boundBox.Left, terrain->GetHeightAt(boundBox.Left, center.y), center.y);
-	left->enabled = true;
-	left->tex = sf::Vector2f(texCoords.Left, texCenter.y);
-
-	vertices[Vertex::LEFT] = left;
-
+		vertices[i] = vertex;
+	}
 
 	t.nodes.push_back(this);
 }
 
-void TerrainNode::Render() {
-
-	if(!terrain->GetCamera().IsInFrustrum(*this)) {
-		return;
-	}
-
-	if(isLeaf) {
-		glBegin(GL_TRIANGLE_FAN);
-
-		Vertex3D * firstEnabled = NULL;
-
-		for(int i=0; i < 9; i++) {
-			if(vertices[i]->enabled) {
-
-				if(firstEnabled == NULL && i != Vertex::CENTER) {
-					firstEnabled = vertices[i];
-				}
-
-				//glTexCoord2f(vertices[i].tex.x, vertices[i].tex.y);
-				glVertex3f(vertices[i]->pos.x, vertices[i]->pos.y, vertices[i]->pos.z );
-			}
-		}
-
-		if(firstEnabled != NULL) {
-			//glTexCoord2f(firstEnabled->tex.x, firstEnabled->tex.y);
-			glVertex3f(firstEnabled->pos.x, firstEnabled->pos.y, firstEnabled->pos.z);
-		}
-
-		glEnd();
-	} else {
-		for(unsigned int i=0; i <= 3; i++) {
-			children[i]->Render();
-		}
-	}
-
-}
 
 TerrainNode::~TerrainNode() {
 

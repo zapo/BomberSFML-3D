@@ -12,13 +12,13 @@
 
 namespace Bomber {
 
-typedef struct Vertex3D { // 32 bit
+typedef struct Vertex3D { // 64 bit
 
 	sf::Vector3f pos;  //Vertex
 	sf::Vector3f nor;  //Normal
 	sf::Vector2f tex;  //Texcoord0
 	sf::Vector3f col;  // col
-	float padding[19];
+	float padding[4];
 	bool enabled;
 
 } Vertex3D;

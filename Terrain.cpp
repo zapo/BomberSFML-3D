@@ -6,20 +6,36 @@
  */
 
 
-#define BUFFER_OFFSET(i) ((char*) NULL + (i))
 
-
+#include "VertexBuffer.h"
 #include "Terrain.h"
 #include "Camera.h"
 #include <iostream>
 #include <algorithm>
 #include "TerrainNode.h"
 #include "VectorUtils.h"
+#include <libnoise/noise.h>
+#include "noiseutils.h"
+
+using namespace noise;
+
 
 namespace Bomber {
 
+const unsigned int Terrain::ordering[24] = {
+	0, 1, 2,
+	0, 2, 3,
+	0, 3, 4,
+	0, 4, 5,
+	0, 5, 6,
+	0, 6, 7,
+	0, 7, 8,
+	0, 8, 1
+};
+
+
 Terrain::Terrain(const std::string & texturePath, Camera & camera) {
-	maxResolution = 3.f;
+	maxResolution = 8.f;
 	minResolution = 1.f;
 
 	this->camera = &camera;
@@ -29,9 +45,10 @@ Terrain::Terrain(const std::string & texturePath, Camera & camera) {
 	}
 	mainTexture.SetSmooth(true);
 	heights = NULL;
+	buffer = NULL;
 
+	scale = sf::Vector3f(1, 1, 1);
 
-	//buffer = new VertexBuffer(GL_DYNAMIC_DRAW, )
 }
 
 Terrain::~Terrain() {
@@ -46,11 +63,11 @@ void Terrain::UnloadHeightMap() {
 
 
 
-sf::Uint32 Terrain::GetRelHeightAt(unsigned int x, unsigned y) const {
+float Terrain::GetRelHeightAt(unsigned int x, unsigned y) const {
 
 	if(heightMap.GetHeight() > 0) {
 
-		return heights[x + heightMap.GetHeight() * y];
+		return heights[x + size * y];
 
 	}else {
 		return 0;
@@ -58,8 +75,8 @@ sf::Uint32 Terrain::GetRelHeightAt(unsigned int x, unsigned y) const {
 
 }
 
-sf::Uint32 Terrain::GetHeightAt(unsigned int x, unsigned z) const {
-	sf::Uint32 height = GetRelHeightAt(x / scale.x, z / scale.z);
+float Terrain::GetHeightAt(unsigned int x, unsigned z) const {
+	float height = GetRelHeightAt(x / scale.x, z / scale.z);
 
 	return height * scale.y;
 }
@@ -87,39 +104,136 @@ bool Terrain::LoadHeightMap(const std::string & filename) {
 
 	size = heightMap.GetWidth();
 
-	heights = new sf::Uint32[size * size];
+	heights = new float[size * size];
 
 	const sf::Uint8 * pixel = heightMap.GetPixelsPtr();
 
-	for(unsigned int i = 0; i < (size * size * 4); i+=4) {
-
-		heights[i/4] = pixel[i] * 100 / 255;
+	for(unsigned int i = 0; i < (size * size * 4); i+= (4)) {
+		heights[i/4] = pixel[i] * 100.0f / 255.0f;
 	}
 
 	SetCenter(sf::Vector2f((GetPosition().x + size) / 2, (GetPosition().y + size) / 2));
 
 	root = new TerrainNode(sf::Vector2i(size / 2, size / 2), size - 1, *this);
 
+	unsigned int start = 0;
+
+	for(unsigned int i=0; i < nodes.size(); i++) {
+
+		TerrainNode & node = *(nodes[i]);
+		start = vertices.size();
+
+		for(unsigned int j=0; j < 9; j++) {
+			Vertex3D & vertex = *(node.GetVertex((Vertex::Location)j));
+			vertices.push_back(vertex);
+		}
+
+		for(unsigned int j=0; j < 24; j++) {
+			indexes.push_back(ordering[j] + start);
+		}
+	}
+
+	buffer = new VertexBuffer(GL_DYNAMIC_DRAW, vertices, indexes);
 	return true;
 }
 
+
+bool Terrain::GenMap() {
+
+	unsigned int seconds;
+	seconds = time(NULL);
+
+	sf::Randomizer random;
+	random.SetSeed(seconds);
+
+	module::Perlin noiseModule;
+	noiseModule.SetOctaveCount(5);
+	::noise::utils::NoiseMap heightMap;
+
+	::noise::utils::NoiseMapBuilderPlane heightMapBuilder;
+	heightMapBuilder.SetSourceModule(noiseModule);
+	heightMapBuilder.SetDestNoiseMap(heightMap);
+
+	heightMapBuilder.SetDestSize(513, 513);
+	heightMapBuilder.SetBounds(6.0, 10.0, 2.0, 5.0);
+	heightMapBuilder.Build();
+
+	::noise::utils::RendererImage renderer;
+	::noise::utils::Image image;
+	renderer.SetSourceNoiseMap(heightMap);
+	renderer.SetDestImage(image);
+
+	renderer.Render();
+
+	::noise::utils::WriterBMP writer;
+	writer.SetSourceImage (image);
+	writer.SetDestFilename ("gen.bmp");
+	writer.WriteDestFile ();
+
+	return true;
+}
+
+
 void Terrain::Update() {
+
+	vertices.clear();
+	indexes.clear();
 
 	numbTriangles = 0;
 	numbNodes = 0;
 
 	RefineNode(*root);
+
+	buffer->Setup(vertices, indexes);
 }
 
 
 void Terrain::Render(float framerate) {
 
 	this->framerate = framerate;
-	root->Render();
+	buffer->Render();
 }
 
 void Terrain::RefineNode(TerrainNode & node) {
 
+	if(Subdivide(node)) {
+		//subdivide
+
+		node.isLeaf = false;
+
+		for(unsigned int i=0; i <= 3; i++) {
+
+			TerrainNode & child = *(node.GetChild((TerrainNode::Type)i));
+			RefineNode(child);
+		}
+
+	} else {
+		node.isLeaf = true;
+
+		numbNodes ++;
+
+		if(camera->IsInFrustrum(node)) {
+
+			numbTriangles += 6;
+
+			unsigned int start = vertices.size();
+
+			for(unsigned int j=0; j < 9; j++) {
+				Vertex3D & vertex = *(node.GetVertex((Vertex::Location)j));
+				vertices.push_back(vertex);
+			}
+
+			for(unsigned int j=0; j < 24; j++) {
+				indexes.push_back(ordering[j] + start);
+			}
+
+		} else {
+			numbCulledNodes ++;
+		}
+	}
+}
+
+bool Terrain::Subdivide(TerrainNode & node) {
 	unsigned int size = node.GetSize();
 
 	float distance = ( float ) utils::VectorLength(node.GetVertex(Vertex::CENTER)->pos, camera->GetPosition());
@@ -141,36 +255,9 @@ void Terrain::RefineNode(TerrainNode & node) {
 	}
 
 
-	float f = distance / ((float) size * std::max(maxResolution, 0.1f) * std::max(maxheight ,1.f));
+	float f = (distance * 0.1) / ((float) size * std::max(maxResolution, 0.1f) * std::max(maxheight ,1.f));
 
-	if(f < 1.0f && (size / 2) >= TerrainNode::MIN_SIZE) {
-
-		//subdivide
-
-		node.isLeaf = false;
-
-		for(unsigned int i=0; i <= 3; i++) {
-			RefineNode(*(node.GetChild((TerrainNode::Type)i)));
-			numbNodes ++;
-		}
-
-	} else {
-		node.isLeaf = true;
-
-		if(camera->IsInFrustrum(node)) {
-			numbNodes ++;
-			numbTriangles += 8;
-		}
-	}
-
-
-	if(node.isLeaf) {
-
-
-
-	}
-
-
+	return f < 1.0f && (size / 2) >= TerrainNode::MIN_SIZE;
 }
 
 }

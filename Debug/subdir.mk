@@ -10,7 +10,8 @@ CPP_SRCS += \
 ../TerrainNode.cpp \
 ../VertexBuffer.cpp \
 ../Window.cpp \
-../main.cpp 
+../main.cpp \
+../noiseutils.cpp 
 
 OBJS += \
 ./Camera.o \
@@ -19,7 +20,8 @@ OBJS += \
 ./TerrainNode.o \
 ./VertexBuffer.o \
 ./Window.o \
-./main.o 
+./main.o \
+./noiseutils.o 
 
 CPP_DEPS += \
 ./Camera.d \
@@ -28,7 +30,8 @@ CPP_DEPS += \
 ./TerrainNode.d \
 ./VertexBuffer.d \
 ./Window.d \
-./main.d 
+./main.d \
+./noiseutils.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
