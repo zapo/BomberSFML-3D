@@ -20,8 +20,6 @@ class Shader {
 public:
 	Shader(std::string vertex_filename, std::string fragment_filename) {
 
-		return;
-
 		vertex   = LoadShader(GL_VERTEX_SHADER,   vertex_filename);
 		fragment = LoadShader(GL_FRAGMENT_SHADER, fragment_filename);
 

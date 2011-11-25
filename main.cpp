@@ -39,6 +39,8 @@ void HandleEvents(sf::RenderWindow & window, Camera & camera, Terrain & t, Light
 
 	while(window.GetEvent(event)) {
 
+
+
 		if(event.Type == sf::Event::Closed) {
 			window.Close();
 		}
@@ -61,6 +63,8 @@ void HandleEvents(sf::RenderWindow & window, Camera & camera, Terrain & t, Light
 		if(event.Type == sf::Event::GainedFocus) {
 			capturePointer = true;
 		}
+
+
 	}
 
 
@@ -101,7 +105,7 @@ void HandleEvents(sf::RenderWindow & window, Camera & camera, Terrain & t, Light
 		}
 	}
 
-	t.Update();
+
 
 }
 
@@ -111,7 +115,7 @@ int main(int argc, char** argv) {
 
 	Settings.DepthBits         = 24;
 	Settings.StencilBits       = 8;
-	Settings.AntialiasingLevel = 4;
+	Settings.AntialiasingLevel = 0;
 
 	sf::RenderWindow window(sf::VideoMode(1024, 768, 32), "BomberSFML-3D", sf::Style::Resize, Settings);
 
@@ -155,6 +159,8 @@ int main(int argc, char** argv) {
 
 
 	while(window.IsOpened()) {
+
+		t.Update();
 
 		int framerate = 1.f/window.GetFrameTime();
 

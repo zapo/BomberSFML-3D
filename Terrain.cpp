@@ -41,13 +41,13 @@ Terrain::Terrain(const std::string & texturePath, Camera & camera) : camera(&cam
 	scale = sf::Vector3f(1, 1, 1);
 
 
-	shaders[0] = new Shader(
+	/*shaders[0] = new Shader(
 		"resources/v.sfx",
 		"resources/f.sfx"
 	);
 
 	shaders[0]->Enable();
-	shaders[0]->SendUniformInt("tex", 0);
+	shaders[0]->SendUniformInt("tex", 0);*/
 
 }
 
@@ -201,8 +201,9 @@ void Terrain::Update() {
 	indexes.clear();
 
 	numbTriangles = 0;
+	numbCulledNodes = 0;
 	numbNodes = 0;
-	skirts = 0;
+	numbSkirts = 0;
 
 	RefineNode(*root);
 
@@ -259,13 +260,13 @@ void Terrain::RefineNode(TerrainNode & node) {
 					for(adj_it = adjacents.begin(); adj_it != adjacents.end(); adj_it++) {
 						if((*adj_it)->GetLod() > node.GetLod() && camera->IsInFrustrum(**adj_it)) {
 
-							/*for(unsigned int j = 0; j < 3; j++) {
+							for(unsigned int j = 0; j < 3; j++) {
 								(*adj_it)->GetVertex((Vertex::Location)direction_adjacent_vertices[i][j])->col = sf::Vector3f(1.f, 0.f, 0.f);
 								indexes.push_back(GetIndexAt(*(*adj_it)->GetVertex((Vertex::Location)direction_adjacent_vertices[i][j])));
 
 							}
-							skirts ++;
-							numbTriangles ++;*/
+							numbSkirts ++;
+							numbTriangles ++;
 						}
 					}
 				}
