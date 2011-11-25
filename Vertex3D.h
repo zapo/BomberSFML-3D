@@ -9,6 +9,7 @@
 #define VERTEX3D_H_
 
 #include <SFML/Graphics.hpp>
+#include <iostream>
 
 namespace Bomber {
 
@@ -18,8 +19,10 @@ typedef struct Vertex3D { // 64 bit
 	sf::Vector3f nor;  //Normal
 	sf::Vector2f tex;  //Texcoord0
 	sf::Vector3f col;  // col
-	float padding[4];
+	float alpha;
 	bool enabled;
+	bool padding[15];
+
 
 } Vertex3D;
 

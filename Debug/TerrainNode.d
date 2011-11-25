@@ -1,12 +1,19 @@
-TerrainNode.d: ../TerrainNode.cpp ../TerrainNode.h ../Vertex3D.h \
- ../VectorUtils.h ../Terrain.h ../Camera.h
+TerrainNode.d: ../TerrainNode.cpp ../Terrain.h ../Model.h ../Shader.h \
+ ../VertexBuffer.h ../Vertex3D.h ../VectorUtils.h ../TerrainNode.h \
+ ../Camera.h
 
-../TerrainNode.h:
+../Terrain.h:
+
+../Model.h:
+
+../Shader.h:
+
+../VertexBuffer.h:
 
 ../Vertex3D.h:
 
 ../VectorUtils.h:
 
-../Terrain.h:
+../TerrainNode.h:
 
 ../Camera.h:

@@ -1,5 +1,8 @@
-Terrain.d: ../Terrain.cpp ../VertexBuffer.h ../Vertex3D.h ../Terrain.h \
- ../Camera.h ../TerrainNode.h ../VectorUtils.h ../noiseutils.h
+Terrain.d: ../Terrain.cpp ../Shader.h ../VertexBuffer.h ../Vertex3D.h \
+ ../Terrain.h ../Model.h ../VectorUtils.h ../Camera.h ../TerrainNode.h \
+ ../noiseutils.h
+
+../Shader.h:
 
 ../VertexBuffer.h:
 
@@ -7,10 +10,12 @@ Terrain.d: ../Terrain.cpp ../VertexBuffer.h ../Vertex3D.h ../Terrain.h \
 
 ../Terrain.h:
 
+../Model.h:
+
+../VectorUtils.h:
+
 ../Camera.h:
 
 ../TerrainNode.h:
-
-../VectorUtils.h:
 
 ../noiseutils.h:

@@ -10,6 +10,8 @@
 namespace Bomber {
 
 Window::Window(sf::VideoMode mode, std::string name) : sf::RenderWindow(mode, name) {
+
+
 }
 
 Window::~Window() {

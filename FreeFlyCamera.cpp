@@ -12,11 +12,13 @@
 
 namespace Bomber {
 
-FreeFlyCamera::FreeFlyCamera(const sf::Vector3f & position, const sf::Vector3f & target, sf::RenderWindow & win) {
+FreeFlyCamera::FreeFlyCamera(const sf::Vector3f & position, const sf::Vector3f & target, sf::Window & win) {
 
 	lastPosition = position;
 
-	fov = 60;
+	up = _UP_;
+
+	fov = 80;
 	near = 0.1;
 	far = 10000;
 	ratio = ((float)win.GetWidth() / (float)win.GetHeight());
@@ -27,8 +29,10 @@ FreeFlyCamera::FreeFlyCamera(const sf::Vector3f & position, const sf::Vector3f &
 
 	sensivity = 0.5f;
 
-	theta 	= utils::VectorsAngle(sf::Vector2f(target.x, target.z), sf::Vector2f(position.x, position.z));
-	phi		= utils::VectorsAngle(sf::Vector2f(target.z, target.y), sf::Vector2f(_UP_.x, _UP_.y));
+	theta 	= 45;//utils::VectorsAngle(sf::Vector2f(target.x, target.z), sf::Vector2f(position.x, position.z));
+	phi		= -45;//utils::VectorsAngle(sf::Vector2f(target.z, target.y), sf::Vector2f(up.x, up.y));
+
+	psi = 0;
 
 	CompileVectors();
 
@@ -46,6 +50,8 @@ FreeFlyCamera::~FreeFlyCamera() {
 }
 
 void FreeFlyCamera::Animate(float dt, const sf::Input & input) {
+
+
 
 	if(input.IsKeyDown(sf::Key::Left)) {
 		position += speed * left * dt;
@@ -65,13 +71,14 @@ void FreeFlyCamera::Animate(float dt, const sf::Input & input) {
 
 	CompileVectors();
 	SetCameraInternals();
+
 }
 
 void FreeFlyCamera::SetCameraInternals() {
 
 		sf::Vector3f Z = utils::Normalize(position - target);
 
-		sf::Vector3f X = utils::Normalize(utils::CrossProduct(Z, _UP_));
+		sf::Vector3f X = utils::Normalize(utils::CrossProduct(Z, up));
 
 		sf::Vector3f Y = utils::Normalize(utils::CrossProduct(Z, X));
 
@@ -126,10 +133,24 @@ void FreeFlyCamera::CompileVectors() {
 	forward.x = r_temp * sin(theta * M_PI / 180.f);
 	forward.z = r_temp * cos(theta * M_PI / 180.f);
 
-	left = utils::Normalize(utils::CrossProduct(_UP_, forward));
+
+	left = utils::Normalize(utils::CrossProduct(up, forward));
 
 	target = position + forward;
 
+}
+
+void FreeFlyCamera::SetPsi(double psi) {
+
+	this->psi = psi;
+
+	float psi_rad = psi * M_PI / 180.f;
+	up = (float)cos(psi_rad) * up + (1 - (float)cos(psi_rad)) * (utils::DotProduct(up, forward)) * forward + ((float)sin(psi_rad)) * (utils::CrossProduct(forward, up));
+
+	this->psi = 0;
+}
+double FreeFlyCamera::GetPsi() const {
+	return this->psi;
 }
 
 const sf::Vector3f & FreeFlyCamera::GetPosition() const {
@@ -160,10 +181,10 @@ double FreeFlyCamera::GetPhi() const {
 	return phi;
 }
 
-void FreeFlyCamera::OnMouseMoved(sf::Event & event) {
+void FreeFlyCamera::OnMouseMoved(sf::Event & event, float frametime) {
 
-	theta 	-= (event.MouseMove.X - mousePosition.x) * sensivity;
-	phi 	-= (event.MouseMove.Y - mousePosition.y) * sensivity;
+	theta 	-= (event.MouseMove.X - mousePosition.x) * sensivity * frametime;
+	phi 	-= (event.MouseMove.Y - mousePosition.y) * sensivity * frametime;
 
 	CompileVectors();
 	SetCameraInternals();
@@ -175,7 +196,10 @@ void FreeFlyCamera::Look() {
 	glLoadIdentity();
 	gluPerspective(fov, (float)ratio, near, far);
 
-	gluLookAt(position.x, position.y, position.z, target.x, target.y, target.z, _UP_.x, _UP_.y, _UP_.z);
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	gluLookAt(position.x, position.y, position.z, target.x, target.y, target.z, up.x, up.y, up.z);
 }
 
 void FreeFlyCamera::SetMousePosition(sf::Vector2f position) {

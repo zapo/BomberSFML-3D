@@ -6,6 +6,9 @@
 CPP_SRCS += \
 ../Camera.cpp \
 ../FreeFlyCamera.cpp \
+../Light.cpp \
+../Model.cpp \
+../Shader.cpp \
 ../Terrain.cpp \
 ../TerrainNode.cpp \
 ../VertexBuffer.cpp \
@@ -16,6 +19,9 @@ CPP_SRCS += \
 OBJS += \
 ./Camera.o \
 ./FreeFlyCamera.o \
+./Light.o \
+./Model.o \
+./Shader.o \
 ./Terrain.o \
 ./TerrainNode.o \
 ./VertexBuffer.o \
@@ -26,6 +32,9 @@ OBJS += \
 CPP_DEPS += \
 ./Camera.d \
 ./FreeFlyCamera.d \
+./Light.d \
+./Model.d \
+./Shader.d \
 ./Terrain.d \
 ./TerrainNode.d \
 ./VertexBuffer.d \

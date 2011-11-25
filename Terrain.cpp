@@ -6,50 +6,58 @@
  */
 
 
-
+#include "Shader.h"
 #include "VertexBuffer.h"
+
 #include "Terrain.h"
 #include "Camera.h"
 #include <iostream>
 #include <algorithm>
+
 #include "TerrainNode.h"
 #include "VectorUtils.h"
 #include <libnoise/noise.h>
 #include "noiseutils.h"
+
 
 using namespace noise;
 
 
 namespace Bomber {
 
-const unsigned int Terrain::ordering[24] = {
-	0, 1, 2,
-	0, 2, 3,
-	0, 3, 4,
-	0, 4, 5,
-	0, 5, 6,
-	0, 6, 7,
-	0, 7, 8,
-	0, 8, 1
-};
 
+Terrain::Terrain(const std::string & texturePath, Camera & camera) : camera(&camera){
 
-Terrain::Terrain(const std::string & texturePath, Camera & camera) {
 	maxResolution = 8.f;
-	minResolution = 1.f;
+	minResolution = 6.f;
 
-	this->camera = &camera;
+	GenMap();
 
 	if(mainTexture.LoadFromFile(texturePath)) {
 		std::cout << "texture loaded" << std::endl;
 	}
 	mainTexture.SetSmooth(true);
 	heights = NULL;
-	buffer = NULL;
-
 	scale = sf::Vector3f(1, 1, 1);
 
+
+	shaders[0] = new Shader(
+		"resources/v.sfx",
+		"resources/f.sfx"
+	);
+
+	shaders[0]->Enable();
+	shaders[0]->SendUniformInt("tex", 0);
+
 }
+
+const unsigned int Terrain::direction_adjacent_vertices[4][3] = {
+		{(unsigned int)Vertex::TOPLEFT, 	(unsigned int)Vertex::TOPRIGHT, 	(unsigned int)Vertex::TOP}, 	// BOTTOM
+		{(unsigned int)Vertex::BOTTOMRIGHT, (unsigned int)Vertex::TOPRIGHT, 	(unsigned int)Vertex::RIGHT}, 	// LEFT
+		{(unsigned int)Vertex::BOTTOMLEFT, 	(unsigned int)Vertex::BOTTOMRIGHT, 	(unsigned int)Vertex::BOTTOM}, 	// TOP
+		{(unsigned int)Vertex::BOTTOMLEFT, 	(unsigned int)Vertex::TOPLEFT, 		(unsigned int)Vertex::LEFT}  	// RIGHT
+};
+
 
 Terrain::~Terrain() {
 
@@ -112,28 +120,25 @@ bool Terrain::LoadHeightMap(const std::string & filename) {
 		heights[i/4] = pixel[i] * 100.0f / 255.0f;
 	}
 
-	SetCenter(sf::Vector2f((GetPosition().x + size) / 2, (GetPosition().y + size) / 2));
+	root = new TerrainNode(sf::Vector2f(size / 2, size / 2), size - 1, *this, NULL, TerrainNode::NONE);
 
-	root = new TerrainNode(sf::Vector2i(size / 2, size / 2), size - 1, *this);
+	for(pv_it = position_vertice.begin(); pv_it != position_vertice.end(); pv_it ++) {
+		vertices.push_back(pv_it->second);
+		vertices_indexes[pv_it->second] = vertices.size() - 1;
+	}
 
-	unsigned int start = 0;
+	for(nodes_it = nodes.begin(); nodes_it != nodes.end(); nodes_it ++) {
 
-	for(unsigned int i=0; i < nodes.size(); i++) {
-
-		TerrainNode & node = *(nodes[i]);
-		start = vertices.size();
-
-		for(unsigned int j=0; j < 9; j++) {
-			Vertex3D & vertex = *(node.GetVertex((Vertex::Location)j));
-			vertices.push_back(vertex);
-		}
+		TerrainNode & node = *(*(nodes_it));
 
 		for(unsigned int j=0; j < 24; j++) {
-			indexes.push_back(ordering[j] + start);
+			indexes.push_back(GetIndexAt(*node.GetVertex((Vertex::Location)ordering[j])));
 		}
 	}
 
-	buffer = new VertexBuffer(GL_DYNAMIC_DRAW, vertices, indexes);
+	std::cout << nodes.size() << std::endl;
+
+	buffers[0] = new VertexBuffer(GL_DYNAMIC_DRAW, vertices, indexes);
 	return true;
 }
 
@@ -147,14 +152,14 @@ bool Terrain::GenMap() {
 	random.SetSeed(seconds);
 
 	module::Perlin noiseModule;
-	noiseModule.SetOctaveCount(5);
+	noiseModule.SetOctaveCount(1);
 	::noise::utils::NoiseMap heightMap;
 
 	::noise::utils::NoiseMapBuilderPlane heightMapBuilder;
 	heightMapBuilder.SetSourceModule(noiseModule);
 	heightMapBuilder.SetDestNoiseMap(heightMap);
 
-	heightMapBuilder.SetDestSize(513, 513);
+	heightMapBuilder.SetDestSize(257, 257);
 	heightMapBuilder.SetBounds(6.0, 10.0, 2.0, 5.0);
 	heightMapBuilder.Build();
 
@@ -163,11 +168,28 @@ bool Terrain::GenMap() {
 	renderer.SetSourceNoiseMap(heightMap);
 	renderer.SetDestImage(image);
 
+
 	renderer.Render();
 
 	::noise::utils::WriterBMP writer;
 	writer.SetSourceImage (image);
-	writer.SetDestFilename ("gen.bmp");
+	writer.SetDestFilename ("heights.bmp");
+	writer.WriteDestFile ();
+
+
+	renderer.ClearGradient ();
+	renderer.AddGradientPoint (-1.0000, ::noise::utils::Color (  0,   0, 128, 255)); // deeps
+	renderer.AddGradientPoint (-0.2500, ::noise::utils::Color (  0,   0, 255, 255)); // shallow
+	renderer.AddGradientPoint ( 0.0000, ::noise::utils::Color (  0, 128, 255, 255)); // shore
+	renderer.AddGradientPoint ( 0.0625, ::noise::utils::Color (240, 240,  64, 255)); // sand
+	renderer.AddGradientPoint ( 0.1250, ::noise::utils::Color ( 32, 160,   0, 255)); // grass
+	renderer.AddGradientPoint ( 0.3750, ::noise::utils::Color (224, 224,   0, 255)); // dirt
+	renderer.AddGradientPoint ( 0.7500, ::noise::utils::Color (128, 128, 128, 255)); // rock
+	renderer.AddGradientPoint ( 1.0000, ::noise::utils::Color (255, 255, 255, 255)); // snow
+
+	renderer.Render();
+	writer.SetSourceImage (image);
+	writer.SetDestFilename ("text.bmp");
 	writer.WriteDestFile ();
 
 	return true;
@@ -176,23 +198,29 @@ bool Terrain::GenMap() {
 
 void Terrain::Update() {
 
-	vertices.clear();
 	indexes.clear();
 
 	numbTriangles = 0;
 	numbNodes = 0;
+	skirts = 0;
 
 	RefineNode(*root);
 
-	buffer->Setup(vertices, indexes);
+	buffers[0]->SetIndexes(indexes);
+	buffers[0]->UploadIndexes();
+	//buffers[0]->UploadVertices();
 }
 
+void Terrain::Render() {
+	glColorMaterial(GL_FRONT, GL_SPECULAR);
 
-void Terrain::Render(float framerate) {
+	glColor3f(1.f, 0.f, 0.f);
+	glMateriali(GL_FRONT,GL_SHININESS,50);
 
-	this->framerate = framerate;
-	buffer->Render();
+
+	Model::Render();
 }
+
 
 void Terrain::RefineNode(TerrainNode & node) {
 
@@ -201,7 +229,7 @@ void Terrain::RefineNode(TerrainNode & node) {
 
 		node.isLeaf = false;
 
-		for(unsigned int i=0; i <= 3; i++) {
+		for(unsigned int i=0; i < 4; i++) {
 
 			TerrainNode & child = *(node.GetChild((TerrainNode::Type)i));
 			RefineNode(child);
@@ -216,49 +244,70 @@ void Terrain::RefineNode(TerrainNode & node) {
 
 			numbTriangles += 6;
 
-			unsigned int start = vertices.size();
-
-			for(unsigned int j=0; j < 9; j++) {
-				Vertex3D & vertex = *(node.GetVertex((Vertex::Location)j));
-				vertices.push_back(vertex);
-			}
-
 			for(unsigned int j=0; j < 24; j++) {
-				indexes.push_back(ordering[j] + start);
+				indexes.push_back(GetIndexAt(*node.GetVertex((Vertex::Location)ordering[j])));
 			}
+
+			std::vector<TerrainNode*> adjacents;
+			std::vector<TerrainNode*>::iterator adj_it;
+
+			for(unsigned int i = 0; i < 4; i++) {
+
+				adjacents = node.GetAjacentNodes((TerrainNode::Border)i);
+				if(adjacents.size() > 1) {
+
+					for(adj_it = adjacents.begin(); adj_it != adjacents.end(); adj_it++) {
+						if((*adj_it)->GetLod() > node.GetLod() && camera->IsInFrustrum(**adj_it)) {
+
+							/*for(unsigned int j = 0; j < 3; j++) {
+								(*adj_it)->GetVertex((Vertex::Location)direction_adjacent_vertices[i][j])->col = sf::Vector3f(1.f, 0.f, 0.f);
+								indexes.push_back(GetIndexAt(*(*adj_it)->GetVertex((Vertex::Location)direction_adjacent_vertices[i][j])));
+
+							}
+							skirts ++;
+							numbTriangles ++;*/
+						}
+					}
+				}
+			}
+
 
 		} else {
 			numbCulledNodes ++;
 		}
 	}
+
+
+
 }
 
 bool Terrain::Subdivide(TerrainNode & node) {
 	unsigned int size = node.GetSize();
 
-	float distance = ( float ) utils::VectorLength(node.GetVertex(Vertex::CENTER)->pos, camera->GetPosition());
+	float distance = utils::VectorLength(node.GetVertex(Vertex::CENTER)->pos, camera->GetPosition());
 
 	float maxheight = 0;
-	float _heights[5];
+	float _heights[5] = {
+			node.GetVertex(Vertex::BOTTOMLEFT)	->pos.y,
+			node.GetVertex(Vertex::BOTTOMRIGHT)	->pos.y,
+			node.GetVertex(Vertex::TOPLEFT)		->pos.y,
+			node.GetVertex(Vertex::TOPRIGHT)	->pos.y
+	};
 
-	sf::IntRect boundBox = node.GetBoundBox();
-
-	_heights[0] = GetRelHeightAt(node.GetCenter().x	, boundBox.Top);
-	_heights[1] = GetRelHeightAt(node.GetCenter().x	, boundBox.Bottom);
-	_heights[2] = GetRelHeightAt(boundBox.Right	, node.GetCenter().y);
-	_heights[3] = GetRelHeightAt(boundBox.Left	, node.GetCenter().y);
-
-	float _center_height = GetRelHeightAt(node.GetCenter().x , node.GetCenter().y);
+	float _center_height = node.GetVertex(Vertex::CENTER)->pos.y;
 
 	for(int i = 0; i < 4; i++) {
-		maxheight = std::max(maxheight, (float) fabs(_center_height - _heights[i]));
+		maxheight = std::max(maxheight, (float)fabs(_center_height - _heights[i]));
 	}
 
 
-	float f = (distance * 0.1) / ((float) size * std::max(maxResolution, 0.1f) * std::max(maxheight ,1.f));
+	float f = distance / ((float) size * std::max(maxResolution, 0.1f) * std::max(maxheight, 1.f));
 
 	return f < 1.0f && (size / 2) >= TerrainNode::MIN_SIZE;
 }
+
+
+
 
 }
 

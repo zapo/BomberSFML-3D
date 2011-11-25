@@ -26,8 +26,11 @@ public:
 		sf::Vector3f point;
 	};
 
-	FreeFlyCamera(const sf::Vector3f & position, const sf::Vector3f & target, sf::RenderWindow & win);
+	FreeFlyCamera(const sf::Vector3f & position, const sf::Vector3f & target, sf::Window & win);
 	virtual ~FreeFlyCamera();
+
+	void SetUpVec(sf::Vector3f up) { this->up = up; }
+	sf::Vector3f GetUpVec() { return up; }
 
 	void Animate(float dt, const sf::Input & input);
 	void CompileVectors();
@@ -44,12 +47,15 @@ public:
 	void SetPhi(double);
 	double GetPhi() const;
 
+	void SetPsi(double);
+	double GetPsi() const;
+
 	void SetSpeed(float);
 	float GetSpeed() const;
 
 	float GetCurrentSpeed();
 
-	void OnMouseMoved(sf::Event & event);
+	void OnMouseMoved(sf::Event & event, float frametime);
 
 	void SetMousePosition(sf::Vector2f position);
 
@@ -67,7 +73,7 @@ private:
 	sf::Vector3f lastPosition;
 
 	double theta;
-	double phi;
+	double phi, psi;
 
 	float sensivity;
 
@@ -78,6 +84,8 @@ private:
 	sf::Vector3f left;
 
 	float speed;
+
+	sf::Vector3f up;
 
 	sf::Vector3f target;
 

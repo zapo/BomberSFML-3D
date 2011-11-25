@@ -11,7 +11,10 @@
 #include <SFML/Graphics.hpp>
 #include "Vertex3D.h"
 
+
 namespace Bomber {
+
+
 
 class Terrain;
 
@@ -19,14 +22,18 @@ class TerrainNode {
 public:
 
 	enum Type {
-		NW = 0, NE = 1, SW = 2, SE = 3
+		NW = 0, NE = 1, SW = 2, SE = 3, NONE = 4
+	};
+
+	enum Border {
+		BOTTOM = 0, LEFT = 1, TOP = 2, RIGHT = 3
 	};
 
 
-	TerrainNode(const sf::Vector2i & center, unsigned int size, Terrain & t);
+	TerrainNode(const sf::Vector2f & center, float size, Terrain & t, TerrainNode * parent, Type position);
 	virtual ~TerrainNode();
 
-	unsigned int GetSize() const {
+	float GetSize() const {
 		return size;
 	}
 
@@ -42,15 +49,15 @@ public:
 		}
 	}
 
-	void SetSize(unsigned int _size) {
+	void SetSize(float _size) {
 		size = _size;
 	}
 
-	sf::Vector2i & GetCenter() {
+	sf::Vector2f & GetCenter() {
 		return center;
 	}
 
-	void SetCenter(const sf::Vector2i & _center) {
+	void SetCenter(const sf::Vector2f & _center) {
 		center = _center;
 	}
 
@@ -70,29 +77,59 @@ public:
 		return children[type];
 	}
 
-	sf::IntRect & GetBoundBox() {
+	sf::FloatRect & GetBoundBox() {
 		return boundBox;
+	}
+
+	void SetColor(sf::Vector3f color) {
+		for(unsigned int i=0; i<9; i++) {
+			vertices[i]->col = color;
+		}
+	}
+
+	static const unsigned int direction_map[4][2];
+	static const unsigned int inverse_direction_map[4][2];
+	static const unsigned int oposite_direction[4];
+
+	std::vector<TerrainNode *> GetBorderNodes(Border border);
+	std::vector<TerrainNode *> GetAjacentNodes(Border border);
+
+	inline unsigned int GetLod() const {
+		return lod;
+	}
+
+	inline Type GetOpositePosition(Border border) const;
+
+	inline bool IsBro(TerrainNode & node) {
+		return node.parent == parent;
 	}
 
 
 	void Render();
 
-	static unsigned int MIN_SIZE;
+	static const float MIN_SIZE;
 
 	bool isLeaf;
 
 private :
 
-	Terrain * terrain;
-	sf::IntRect boundBox;
+	Type position;
 
-	sf::Vector2i center;
-	unsigned int size;
+	TerrainNode * parent;
+	Terrain * terrain;
+
+	sf::Vector2f center;
+	float size;
 
 	Vertex3D * vertices[9];
 
 	TerrainNode * children[4];
 
+	TerrainNode * neighbors[4]; // border neighbors
+
+	unsigned int lod;
+
+	sf::FloatRect boundBox;
 
 };
 

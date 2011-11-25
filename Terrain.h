@@ -7,17 +7,30 @@
 
 #ifndef TERRAIN_H_
 #define TERRAIN_H_
+#include "Model.h"
+
 #include "Vertex3D.h"
+#include "VectorUtils.h"
 #include <SFML/Graphics.hpp>
-#include <list>
 
 namespace Bomber {
+
+struct vector_hash : std::unary_function<sf::Vector3f, std::size_t> {
+    inline std::size_t operator()(sf::Vector3f const& p) const
+    {
+    	std::size_t seed = 0;
+		//boost::hash_combine(seed, p.x);
+		//boost::hash_combine(seed, p.y);
+		//boost::hash_combine(seed, p.z);
+		return seed;
+    }
+};
 
 class TerrainNode;
 class Camera;
 class VertexBuffer;
 
-class Terrain : public sf::Drawable {
+class Terrain : public Model {
 public:
 
 	Terrain(const std::string & texturePath, Camera &);
@@ -28,23 +41,18 @@ public:
 	void UnloadHeightMap();
 
 	float GetHeightAt(unsigned int x, unsigned y) const;
-
-	void Render(float framerate);
 	void Update();
+	void Render();
 
-	sf::Uint32 GetNbTriangles() const {
+	sf::Uint32 & GetNbTriangles() {
 		return numbTriangles;
-	}
-
-	void SetNbTriangles(sf::Uint32 nb) {
-		numbTriangles = nb;
 	}
 
 	void SetScale(const sf::Vector3f & _scale) {
 		scale = _scale;
 	}
 
-	sf::Uint32 GetNbNodes() const {
+	sf::Uint32 & GetNbNodes() {
 		return numbNodes;
 	}
 
@@ -52,21 +60,9 @@ public:
 		return numbNodes - numbCulledNodes;
 	}
 
-	void SetNbNodes(sf::Uint32 nb) {
-		numbNodes = nb;
-	}
-
-	void SetTextureRepeat(bool repeat) {
-		textureRepeat = repeat;
-	}
-
-	void SetCamera(Camera & camera) {
-		this->camera = &camera;
-	}
 	Camera & GetCamera() {
 		return *camera;
 	}
-
 
 	const sf::Vector3f & GetScale() {
 		return scale;
@@ -77,11 +73,8 @@ public:
 	}
 
 	void RefineNode(TerrainNode & node);
-
 	bool Subdivide(TerrainNode & node);
-	void Render(sf::RenderTarget &) const {
 
-	}
 
 	void SetMaxResolution(float res) {
 		maxResolution = res;
@@ -99,31 +92,34 @@ public:
 		return minResolution;
 	}
 
-	std::vector<TerrainNode*> nodes;
 
-private:
 
-	std::vector<Vertex3D> vertices;
-	std::vector<Vertex3D>::iterator v_it;
+	std::vector<TerrainNode *> nodes;
+	std::vector<TerrainNode *>::iterator nodes_it;
 
-	std::vector<GLuint> indexes;
-	std::vector<GLuint>::iterator i_it;
+	static const unsigned int direction_adjacent_vertices[4][3];
 
-	static const unsigned int ordering[24];
-
-	float GetRelHeightAt(unsigned int x, unsigned y) const;
+	std::vector<Vertex3D *> vertices;
 
 	TerrainNode * root;
 
-	bool textureRepeat;
+	boost::unordered_map<sf::Vector3f, Vertex3D *, vector_hash> position_vertice;
+	boost::unordered_map<sf::Vector3f, Vertex3D *, vector_hash>::iterator pv_it;
+
+
+private:
+
+
+	float GetRelHeightAt(unsigned int x, unsigned y) const;
+
+
 	sf::Vector3f scale;
 	sf::Uint8 precision;
-	sf::Image mainTexture;
+
 	sf::Image heightMap;
+
 	float * heights;
 	Camera * camera;
-
-
 
 	unsigned int size;
 
@@ -132,10 +128,12 @@ private:
 	float maxResolution;
 	float minResolution;
 
-	unsigned int numbNodes, numbCulledNodes, numbTriangles;
+	unsigned int numbNodes, numbCulledNodes, numbTriangles, skirts;
 
-	VertexBuffer * buffer;
-	sf::Clock framerateAdapterTimer;
+
+
+
+
 
 };
 

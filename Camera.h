@@ -19,7 +19,7 @@ public:
 	virtual sf::Vector3f & GetTarget() = 0;
 	virtual void Look() = 0;
 
-	virtual void OnMouseMoved(sf::Event &) = 0;
+	virtual void OnMouseMoved(sf::Event &, float) = 0;
 	virtual void SetSpeed(float) = 0;
 	virtual float GetSpeed() const = 0;
 
@@ -29,8 +29,13 @@ public:
 	virtual void SetSensivity(float) = 0;
 	virtual float GetCurrentSpeed() = 0;
 
+	virtual void SetPsi(double) = 0;
+	virtual double GetPsi() const = 0;
+	virtual void Animate(float, const sf::Input&) = 0;
+
 
 protected:
+
 };
 
 }

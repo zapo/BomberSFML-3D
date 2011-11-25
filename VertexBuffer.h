@@ -14,14 +14,16 @@
 #include <vector>
 #include "Vertex3D.h"
 #include "iostream"
+#include <boost/unordered_map.hpp>
 
 namespace Bomber {
 
 
 class VertexBuffer {
 public:
-	VertexBuffer(GLenum usage, std::vector<Vertex3D> & vertices, std::vector<GLuint> & indexes) {
+	VertexBuffer(GLenum usage, std::vector<Vertex3D*> & vertices, std::vector<GLuint> & indexes) {
 		this->usage = usage;
+
 
 		SetVertices(vertices);
 		SetIndexes(indexes);
@@ -29,16 +31,23 @@ public:
 		glGenBuffers(2, buffers);
 		Setup(vertices, indexes);
 
+		for(unsigned int i = 0; i < vertices.size(); i++) {
+
+			Vertex3D * vertex = vertices[i];
+			vertices_indexes[vertex] = i;
+		}
+
+
 	}
 
 	virtual ~VertexBuffer() {
 	}
 
 
-	void SetVertices(std::vector<Vertex3D> & vertices) {
+	void SetVertices(std::vector<Vertex3D*> & vertices) {
 		this->vertices = &vertices;
 	}
-	std::vector<Vertex3D> & GetVertices() {
+	std::vector<Vertex3D*> & GetVertices() {
 		return *vertices;
 	}
 
@@ -49,23 +58,45 @@ public:
 		return *indexes;
 	}
 
+	void UploadIndexes() {
 
-	void Setup(std::vector<Vertex3D> & vertices, std::vector<GLuint> & indexes) {
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffers[INDEXES]);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexes->size() * sizeof(GLuint), NULL, usage);
+		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, indexes->size() * sizeof(GLuint), &(indexes->front()));
+
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	}
+
+
+	void UploadVertices() {
+
+
+		std::vector<Vertex3D> _vertices;
+
+		for(vertices_it = vertices->begin(); vertices_it != vertices->end(); vertices_it++) {
+
+			Vertex3D * vertex = *vertices_it;
+			_vertices.push_back(*vertex);
+		}
+
+		std::cout << "Vertices Upload" << std::endl;
+
+
+		glBindBuffer(GL_ARRAY_BUFFER, buffers[VERTICES]);
+		glBufferData(GL_ARRAY_BUFFER, _vertices.size() * sizeof(Vertex3D), NULL, usage);
+		glBufferSubData(GL_ARRAY_BUFFER, 0, _vertices.size() * sizeof(Vertex3D), &(_vertices.front()));
+
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+	}
+
+
+	void Setup(std::vector<Vertex3D*> & vertices, std::vector<GLuint> & indexes) {
 
 		SetVertices(vertices);
 		SetIndexes(indexes);
 
-		glBindBuffer(GL_ARRAY_BUFFER, buffers[VERTICES]);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffers[INDEXES]);
-
-		glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex3D), NULL, usage);
-		glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(Vertex3D), &(vertices[0]));
-
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexes.size() * sizeof(GLuint), NULL, usage);
-		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, indexes.size() * sizeof(GLuint), &(indexes[0]));
-
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		UploadIndexes();
+		UploadVertices();
 	}
 
 	void Render() {
@@ -73,20 +104,31 @@ public:
 		glBindBuffer(GL_ARRAY_BUFFER, buffers[VERTICES]);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffers[INDEXES]);
 
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 		glEnableClientState(GL_VERTEX_ARRAY);
 		glEnableClientState( GL_COLOR_ARRAY );
+		glEnableClientState(GL_NORMAL_ARRAY);
 
-		glColorPointer(3, GL_FLOAT, sizeof(Vertex3D), BUFFER_OFFSET(32));
+		glNormalPointer(GL_FLOAT, sizeof(Vertex3D), BUFFER_OFFSET(12));
+		glTexCoordPointer(2, GL_FLOAT, sizeof(Vertex3D), BUFFER_OFFSET(24));
+		glColorPointer(4, GL_FLOAT, sizeof(Vertex3D), BUFFER_OFFSET(32));
 		glVertexPointer(3, GL_FLOAT, sizeof(Vertex3D), BUFFER_OFFSET(0));
 
 		glDrawElements(GL_TRIANGLES, indexes->size(), GL_UNSIGNED_INT, BUFFER_OFFSET(0));
 
+		glDisableClientState(GL_NORMAL_ARRAY);
 		glDisableClientState( GL_COLOR_ARRAY );
 		glDisableClientState(GL_VERTEX_ARRAY);
+		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 
-		glBindBuffer(GL_ARRAY_BUFFER_ARB, 0);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER_ARB, 0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 
+	}
+
+
+	inline GLuint GetIndexAt(Vertex3D & vertex) {
+		return vertices_indexes[&vertex];
 	}
 
 private:
@@ -99,8 +141,14 @@ private:
 		INDEXES = 1
 	};
 
-	std::vector<Vertex3D> * vertices;
+	std::vector<Vertex3D*> * vertices;
+	std::vector<Vertex3D*>::iterator vertices_it;
+
 	std::vector<GLuint> * indexes;
+	std::vector<GLuint>::iterator indexes_it;
+
+	boost::unordered_map<Vertex3D*, GLuint> vertices_indexes;
+
 };
 }
 
