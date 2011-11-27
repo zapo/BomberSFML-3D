@@ -36,10 +36,10 @@ Model::~Model() {
 
 void Model::Render() {
 
-	//glEnable(GL_TEXTURE_2D);
-	//glActiveTexture(GL_TEXTURE0);
+	glEnable(GL_TEXTURE_2D);
+	glActiveTexture(GL_TEXTURE0);
 
-	//mainTexture.Bind();
+	mainTexture.Bind();
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);

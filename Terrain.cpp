@@ -136,9 +136,7 @@ bool Terrain::LoadHeightMap(const std::string & filename) {
 		}
 	}
 
-	std::cout << nodes.size() << std::endl;
-
-	buffers[0] = new VertexBuffer(GL_DYNAMIC_DRAW, vertices, indexes);
+    buffers[0] = new VertexBuffer(GL_DYNAMIC_DRAW, vertices, indexes);
 	return true;
 }
 

@@ -19,14 +19,16 @@ class TerrainNode;
 class FreeFlyCamera : public Camera {
 public:
 
-	enum {TOP, BOTTOM, LEFT, RIGHT, NEAR, FAR};
+    enum Planes {
+        _TOP, _BOTTOM, _LEFT, _RIGHT, _NEAR, _FAR
+    };
 
 	struct Plane {
 		sf::Vector3f normal;
 		sf::Vector3f point;
 	};
 
-	FreeFlyCamera(const sf::Vector3f & position, const sf::Vector3f & target, sf::Window & win);
+	FreeFlyCamera(const sf::Vector3f & position, const sf::Vector3f & target, sf::RenderWindow & win);
 	virtual ~FreeFlyCamera();
 
 	void SetUpVec(sf::Vector3f up) { this->up = up; }
@@ -92,8 +94,8 @@ private:
 	sf::Vector2f mousePosition;
 
 	unsigned int fov;
-	float near;
-	float far;
+	float _near;
+	float _far;
 	float ratio;
 
 	Plane planes[6];

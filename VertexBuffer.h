@@ -21,15 +21,13 @@ namespace Bomber {
 
 class VertexBuffer {
 public:
-	VertexBuffer(GLenum usage, std::vector<Vertex3D*> & vertices, std::vector<GLuint> & indexes) {
-		this->usage = usage;
-
+	VertexBuffer(GLenum usage, std::vector<Vertex3D*> & vertices, std::vector<GLuint> & indexes) : usage(usage) {
 
 		SetVertices(vertices);
 		SetIndexes(indexes);
 
+
 		glGenBuffers(2, buffers);
-		Setup(vertices, indexes);
 
 		for(unsigned int i = 0; i < vertices.size(); i++) {
 
@@ -37,6 +35,8 @@ public:
 			vertices_indexes[vertex] = i;
 		}
 
+		UploadVertices();
+		UploadIndexes();
 
 	}
 
@@ -63,7 +63,6 @@ public:
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, buffers[INDEXES]);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexes->size() * sizeof(GLuint), NULL, usage);
 		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, indexes->size() * sizeof(GLuint), &(indexes->front()));
-
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
 
@@ -87,16 +86,6 @@ public:
 		glBufferSubData(GL_ARRAY_BUFFER, 0, _vertices.size() * sizeof(Vertex3D), &(_vertices.front()));
 
 		glBindBuffer(GL_ARRAY_BUFFER, 0);
-	}
-
-
-	void Setup(std::vector<Vertex3D*> & vertices, std::vector<GLuint> & indexes) {
-
-		SetVertices(vertices);
-		SetIndexes(indexes);
-
-		UploadIndexes();
-		UploadVertices();
 	}
 
 	void Render() {
@@ -144,10 +133,10 @@ private:
 	std::vector<Vertex3D*> * vertices;
 	std::vector<Vertex3D*>::iterator vertices_it;
 
-	std::vector<GLuint> * indexes;
-	std::vector<GLuint>::iterator indexes_it;
+	std::vector<unsigned int> * indexes;
+	std::vector<unsigned int>::iterator indexes_it;
 
-	boost::unordered_map<Vertex3D*, GLuint> vertices_indexes;
+	boost::unordered_map<Vertex3D*, unsigned int> vertices_indexes;
 
 };
 }

@@ -12,15 +12,15 @@
 
 namespace Bomber {
 
-FreeFlyCamera::FreeFlyCamera(const sf::Vector3f & position, const sf::Vector3f & target, sf::Window & win) {
+FreeFlyCamera::FreeFlyCamera(const sf::Vector3f & position, const sf::Vector3f & target, sf::RenderWindow & win) {
 
 	lastPosition = position;
 
 	up = _UP_;
 
 	fov = 80;
-	near = 0.1;
-	far = 10000;
+	_near = 0.1;
+	_far = 10000;
 	ratio = ((float)win.GetWidth() / (float)win.GetHeight());
 
 	speed = 100.f;
@@ -38,11 +38,11 @@ FreeFlyCamera::FreeFlyCamera(const sf::Vector3f & position, const sf::Vector3f &
 
 	float tang = (float) tan(fov * 0.5f * M_PI / 180.f);
 
-	Hnear = tang * near;
+	Hnear = tang * _near;
 	Wnear = Hnear * ratio;
 
 
-	Hfar = tang * far;
+	Hfar = tang * _far;
 	Wfar = Hfar * ratio;
 }
 
@@ -82,40 +82,40 @@ void FreeFlyCamera::SetCameraInternals() {
 
 		sf::Vector3f Y = utils::Normalize(utils::CrossProduct(Z, X));
 
-		sf::Vector3f nc = position - Z * near;
-		sf::Vector3f fc = position - Z * far;
+		sf::Vector3f nc = position - Z * _near;
+		sf::Vector3f fc = position - Z * _far;
 
-		planes[NEAR].normal = -Z;
-		planes[NEAR].point = nc;
+		planes[_NEAR].normal = -Z;
+		planes[_NEAR].point = nc;
 
-		planes[FAR].normal = Z;
-		planes[FAR].point = fc;
+		planes[_FAR].normal = Z;
+		planes[_FAR].point = fc;
 
 		sf::Vector3f aux, normal;
 
 		aux = (nc + (Y * Wnear)) - position;
 		aux = utils::Normalize(aux);
 		normal = utils::CrossProduct(aux, X);
-		planes[TOP].normal = normal;
-		planes[TOP].point = nc + (Y* Hnear);
+		planes[_TOP].normal = normal;
+		planes[_TOP].point = nc + (Y* Hnear);
 
 		aux = (nc - (Y* Hnear)) - position;
 		aux = utils::Normalize(aux);
 		normal = utils::CrossProduct(X, aux);
-		planes[BOTTOM].normal = normal;
-		planes[BOTTOM].point = nc - (Y* Hnear);
+		planes[_BOTTOM].normal = normal;
+		planes[_BOTTOM].point = nc - (Y* Hnear);
 
 		aux = (nc - X * Wnear) - position;
 		aux = utils::Normalize(aux);
 		normal = utils::CrossProduct(aux, Y);
-		planes[LEFT].normal = normal;
-		planes[LEFT].point = nc - (X * Wnear);
+		planes[_LEFT].normal = normal;
+		planes[_LEFT].point = nc - (X * Wnear);
 
 		aux = (nc + (X * Wnear)) - position;
 		aux = utils::Normalize(aux);
 		normal = utils::CrossProduct(Y, aux);
-		planes[RIGHT].normal = normal;
-		planes[RIGHT].point = nc + (X * Wnear);
+		planes[_RIGHT].normal = normal;
+		planes[_RIGHT].point = nc + (X * Wnear);
 }
 
 
@@ -194,7 +194,7 @@ void FreeFlyCamera::Look() {
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
-	gluPerspective(fov, (float)ratio, near, far);
+	gluPerspective(fov, (float)ratio, _near, _far);
 
 
 	glMatrixMode(GL_MODELVIEW);

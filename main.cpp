@@ -14,7 +14,6 @@
 #include <sstream>
 
 
-
 using namespace Bomber;
 
 
@@ -120,10 +119,14 @@ int main(int argc, char** argv) {
 	sf::RenderWindow window(sf::VideoMode(1024, 768, 32), "BomberSFML-3D", sf::Style::Resize, Settings);
 
 
+    GLenum err = glewInit();
+    if (GLEW_OK != err) {
+        /* Problem: glewInit failed, something is seriously wrong. */
+       std::cerr <<  "Error: " << glewGetErrorString(err) << std::endl;
+       return EXIT_FAILURE;
+    }
 
 	sf::Vector2f center(window.GetWidth() / 2.f, window.GetHeight() / 2.f);
-
-	//window.SetPosition(100.f, 100.f);
 
 	sf::View interface;
 	sf::String info;
@@ -156,8 +159,6 @@ int main(int argc, char** argv) {
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
 
-
-
 	while(window.IsOpened()) {
 
 		t.Update();
@@ -187,7 +188,7 @@ int main(int argc, char** argv) {
 			glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		}
 
-		//sun.Render();
+		sun.Render();
 		t.Render();
 
 		glMatrixMode(GL_MODELVIEW);
