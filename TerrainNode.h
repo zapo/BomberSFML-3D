@@ -15,7 +15,6 @@
 namespace Bomber {
 
 
-
 class Terrain;
 
 class TerrainNode {
@@ -35,6 +34,10 @@ public:
 
 	float GetSize() const {
 		return size;
+	}
+
+	TerrainNode * GetNeighbor(Border border) {
+		return neighbors[border];
 	}
 
 	void Disable(){
@@ -87,9 +90,14 @@ public:
 		}
 	}
 
+	void SetLocalNeighbors();
+	void SetGlobalNeighbors();
+
+
 	static const unsigned int direction_map[4][2];
 	static const unsigned int inverse_direction_map[4][2];
 	static const unsigned int oposite_direction[4];
+	static const unsigned int local_directions[4][2];
 
 	std::vector<TerrainNode *> GetBorderNodes(Border border);
 	std::vector<TerrainNode *> GetAjacentNodes(Border border);
@@ -98,7 +106,13 @@ public:
 		return lod;
 	}
 
-	inline Type GetOpositePosition(Border border) const;
+	inline Type GetOpositePosition(Border border) const {
+		if(position == direction_map[border][0]) {
+			return (TerrainNode::Type)inverse_direction_map[border][0];
+		} else {
+			return (TerrainNode::Type)inverse_direction_map[border][1];
+		}
+	}
 
 	inline bool IsBro(TerrainNode & node) {
 		return node.parent == parent;
@@ -110,6 +124,9 @@ public:
 	static const float MIN_SIZE;
 
 	bool isLeaf;
+	std::vector<unsigned int> indexes_ref;
+
+	TerrainNode * neighbors[4]; // border neighbors
 
 private :
 
@@ -125,11 +142,11 @@ private :
 
 	TerrainNode * children[4];
 
-	TerrainNode * neighbors[4]; // border neighbors
-
 	unsigned int lod;
 
 	sf::FloatRect boundBox;
+
+
 
 };
 

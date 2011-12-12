@@ -132,8 +132,15 @@ bool Terrain::LoadHeightMap(const std::string & filename) {
 		TerrainNode & node = *(*(nodes_it));
 
 		for(unsigned int j=0; j < 24; j++) {
-			indexes.push_back(GetIndexAt(*node.GetVertex((Vertex::Location)ordering[j])));
+
+			unsigned int index = GetIndexAt(*node.GetVertex((Vertex::Location)ordering[j]));
+			indexes.push_back(index);
+			node.indexes_ref.push_back(index);
 		}
+
+		node.SetLocalNeighbors();
+		node.SetGlobalNeighbors();
+
 	}
 
     buffers[0] = new VertexBuffer(GL_DYNAMIC_DRAW, vertices, indexes);
@@ -207,7 +214,7 @@ void Terrain::Update() {
 
 	buffers[0]->SetIndexes(indexes);
 	buffers[0]->UploadIndexes();
-	//buffers[0]->UploadVertices();
+
 }
 
 void Terrain::Render() {
@@ -243,31 +250,34 @@ void Terrain::RefineNode(TerrainNode & node) {
 
 			numbTriangles += 6;
 
-			for(unsigned int j=0; j < 24; j++) {
-				indexes.push_back(GetIndexAt(*node.GetVertex((Vertex::Location)ordering[j])));
-			}
+			indexes.insert(indexes.end(), node.indexes_ref.begin(), node.indexes_ref.end());
 
 			std::vector<TerrainNode*> adjacents;
 			std::vector<TerrainNode*>::iterator adj_it;
 
-			for(unsigned int i = 0; i < 4; i++) {
+			if(node.GetSize() < root->GetSize() / 2) {
 
-				adjacents = node.GetAjacentNodes((TerrainNode::Border)i);
-				if(adjacents.size() > 1) {
+				for(unsigned int i = 0; i < 4; i++) {
 
-					for(adj_it = adjacents.begin(); adj_it != adjacents.end(); adj_it++) {
-						if((*adj_it)->GetLod() > node.GetLod() && camera->IsInFrustrum(**adj_it)) {
+					adjacents = node.GetAjacentNodes((TerrainNode::Border)i);
 
-							for(unsigned int j = 0; j < 3; j++) {
-								(*adj_it)->GetVertex((Vertex::Location)direction_adjacent_vertices[i][j])->col = sf::Vector3f(1.f, 0.f, 0.f);
-								indexes.push_back(GetIndexAt(*(*adj_it)->GetVertex((Vertex::Location)direction_adjacent_vertices[i][j])));
+					if(adjacents.size() > 1) {
 
+						for(adj_it = adjacents.begin(); adj_it != adjacents.end(); adj_it++) {
+							if(camera->IsInFrustrum(**adj_it) && (*adj_it)->GetLod() > node.GetLod()) {
+
+								for(unsigned int j = 0; j < 3; j++) {
+									//(*adj_it)->GetVertex((Vertex::Location)direction_adjacent_vertices[i][j])->col = sf::Vector3f(1.f, 0.f, 0.f);
+									indexes.push_back(GetIndexAt(*(*adj_it)->GetVertex((Vertex::Location)direction_adjacent_vertices[i][j])));
+
+								}
+								numbSkirts ++;
+								numbTriangles ++;
 							}
-							numbSkirts ++;
-							numbTriangles ++;
 						}
 					}
 				}
+
 			}
 
 

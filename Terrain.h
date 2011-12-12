@@ -20,7 +20,6 @@ struct vector_hash : std::unary_function<sf::Vector3f, std::size_t> {
     {
     	std::size_t seed = 0;
 		boost::hash_combine(seed, p.x);
-		boost::hash_combine(seed, p.y);
 		boost::hash_combine(seed, p.z);
 		return seed;
     }

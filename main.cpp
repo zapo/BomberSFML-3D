@@ -159,6 +159,7 @@ int main(int argc, char** argv) {
 	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
 
 
+
 	while(window.IsOpened()) {
 
 		t.Update();

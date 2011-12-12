@@ -12,8 +12,6 @@
 
 
 
-
-
 namespace Bomber {
 
 const float TerrainNode::MIN_SIZE = 2;
@@ -30,28 +28,11 @@ TerrainNode::TerrainNode(const sf::Vector2f & center, float size, Terrain & t, T
 		)){
 
 
+	for(unsigned int i=0; i < 4; i++) {
+		neighbors[i] = NULL;
+	}
 
 	lod = (parent != NULL) ? parent->GetLod() + 1 : 1;
-
-	// get brothers
-	for(unsigned int i = 0; i < 4; i++) {
-
-		int positions[2] = {
-			inverse_direction_map[(unsigned int)(Border)i][0],
-			inverse_direction_map[(unsigned int)(Border)i][1]
-		};
-
-		TerrainNode * bro = NULL;
-
-		if(position == positions[0]) {
-			bro = parent->GetChild((Type)direction_map[i][0]);
-		} else if(position == positions[1]) {
-			bro = parent->GetChild((Type)direction_map[i][1]);
-		}
-
-
-		neighbors[i] = bro;
-	}
 
 	TerrainNode * childNW = NULL;
 	TerrainNode * childNE = NULL;
@@ -81,6 +62,9 @@ TerrainNode::TerrainNode(const sf::Vector2f & center, float size, Terrain & t, T
 	SetChild(NE, childNE);
 	SetChild(SW, childSW);
 	SetChild(SE, childSE);
+
+
+
 
 	sf::FloatRect texCoords = terrain->GetMainTexture().GetTexCoords(sf::IntRect(boundBox.Left, boundBox.Top, boundBox.Right, boundBox.Bottom));
 	sf::Vector2f texCenter(texCoords.Left + texCoords.GetWidth() / 2, texCoords.Top + texCoords.GetHeight() / 2);
@@ -152,8 +136,8 @@ TerrainNode::TerrainNode(const sf::Vector2f & center, float size, Terrain & t, T
 
 		sf::Vector3f fnor = utils::PointsNormal(
               	vertices[Model::ordering[i]]->pos,
-	                vertices[Model::ordering[i+1]]->pos,
-					vertices[Model::ordering[i+2]]->pos
+	            vertices[Model::ordering[i+1]]->pos,
+	            vertices[Model::ordering[i+2]]->pos
 	    );
 
 		vertices[Model::ordering[i+1]]->nor += fnor;
@@ -171,7 +155,6 @@ TerrainNode::TerrainNode(const sf::Vector2f & center, float size, Terrain & t, T
 	vertices[Vertex::LEFT]->nor 		/= 2.f;
 	vertices[Vertex::CENTER]->nor 		/= 8.f;
 
-
 	t.nodes.push_back(this);
 }
 
@@ -182,6 +165,68 @@ TerrainNode::~TerrainNode() {
 		delete children[i];
 	}
 
+}
+
+void TerrainNode::SetGlobalNeighbors() {
+
+	if(parent != NULL && size > MIN_SIZE) {
+
+		for(unsigned int i=0; i < 4; i++) {
+
+			if(neighbors[i] != NULL) continue;
+
+			std::vector<TerrainNode *>::iterator it;
+
+			for(it = terrain->nodes.begin(); it != terrain->nodes.end(); it++) {
+
+				unsigned int found = 0;
+
+				for(unsigned int j = 0; j < 3; j++) {
+
+					Vertex3D * v1 = (*it)->GetVertex((Vertex::Location)Terrain::direction_adjacent_vertices[i][j]);
+					Vertex3D * v2 = GetVertex((Vertex::Location)Terrain::direction_adjacent_vertices[oposite_direction[i]][j]);
+
+					if( v1 == v2) {
+						found ++;
+					}
+
+				}
+
+				if(found == 3) {
+					neighbors[i] = *it;
+					break;
+				}
+			}
+		}
+	}
+}
+
+void TerrainNode::SetLocalNeighbors() {
+
+	if(parent != NULL) {
+
+		switch(position) {
+
+		case SW:
+			neighbors[TOP] = parent->GetChild(NW);
+			neighbors[RIGHT] = parent->GetChild(SE);
+			break;
+		case NW:
+			neighbors[BOTTOM] = parent->GetChild(SW);
+			neighbors[RIGHT] = parent->GetChild(NE);
+			break;
+		case SE:
+			neighbors[LEFT] = parent->GetChild(SW);
+			neighbors[TOP] = parent->GetChild(NE);
+			break;
+		case NE:
+			neighbors[BOTTOM] = parent->GetChild(SE);
+			neighbors[LEFT]   = parent->GetChild(NW);
+			break;
+		default:
+			break;
+		}
+	}
 }
 
 std::vector<TerrainNode *> TerrainNode::GetBorderNodes(Border border) {
@@ -209,12 +254,10 @@ std::vector<TerrainNode *> TerrainNode::GetBorderNodes(Border border) {
 std::vector<TerrainNode *> TerrainNode::GetAjacentNodes(Border border) {
 
 	std::vector<TerrainNode *> adjacent_nodes;
-	return adjacent_nodes;
 
-	if(parent == NULL) return adjacent_nodes; // i am root
+	if(parent == NULL || size == MIN_SIZE) return adjacent_nodes; // i am root or im at minimum size
 
-	// if i can ask directly to my siblings
-	TerrainNode * bro = neighbors[border];
+	TerrainNode * bro = GetNeighbor(border);
 
 	if(bro != NULL) {
 		if(bro->isLeaf) {
@@ -223,20 +266,10 @@ std::vector<TerrainNode *> TerrainNode::GetAjacentNodes(Border border) {
 			std::vector<TerrainNode *> temp = bro->GetBorderNodes((Border)oposite_direction[border]);
 			adjacent_nodes.insert(adjacent_nodes.end(), temp.begin(), temp.end());
 		}
-	} else {
-
 	}
 
 	return adjacent_nodes;
 
-}
-
-inline TerrainNode::Type TerrainNode::GetOpositePosition(Border border) const {
-	if(position == direction_map[border][0]) {
-		return (TerrainNode::Type)inverse_direction_map[border][0];
-	} else {
-		return (TerrainNode::Type)inverse_direction_map[border][1];
-	}
 }
 
 const unsigned int TerrainNode::direction_map[4][2] = {
@@ -257,6 +290,13 @@ const unsigned int TerrainNode::oposite_direction[4] = {
 		RIGHT, 	// LEFT
 		BOTTOM, // TOP
 		LEFT  	// RIGHT
+};
+
+const unsigned int TerrainNode::local_directions[4][2] = { // enum Type {NW = 0, NE = 1, SW = 2, SE = 3, NONE = 4};
+		{(unsigned int)SW, (unsigned int)NE},
+		{(unsigned int)SE, (unsigned int)NW},
+		{(unsigned int)NW, (unsigned int)SE},
+		{(unsigned int)SW, (unsigned int)NE},
 };
 
 }
